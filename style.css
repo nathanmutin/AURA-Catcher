@@ -361,7 +361,6 @@ input[type="range"]::-moz-range-thumb {
 .panel-text {
     font-weight: 600;
     color: #333;
-    margin-bottom: 5px;
 }
 
 .panel-size {

@@ -83,43 +83,82 @@ class PanelGenerator {
             }
         return { hasError: false };
     }
+
+    // Wrap text into the optimal number of lines
     wrapText(text) {
+        const maxFontSize = 0.09;
+
+        let fontSize = maxFontSize;
+        let lines = [];
+
         // Only handle literal \n sequences (backslash + n) for line breaks within panels
         if (text.includes('\\n')) {
-            const lines = text.split('\\n').map(line => line.trim());
-            if (lines.length > 2) {
-                throw new Error("Plusieurs retours à la ligne détectés. Un seul \\n est autorisé par panneau.");
-            }
-            return lines.length === 1 ? [lines[0], ""] : lines;
+            lines = text.split('\\n').map(line => line.trim());
+            // Choose font size based on the longest line or number of lines
+            // For maxFontSize, we can fit 19 characters per line and 2 lines
+            const longestLine = lines.reduce((a, b) => a.length > b.length ? a : b, "");
+            fontSize = maxFontSize * Math.min(1, 19 / longestLine.length, 2.6 / lines.length);
         } else {
-            // Simple word wrapping for long text
-            if (text.length <= 19) {
-                return [text, ""];
-            }
-            
             const words = text.split(' ');
-            const mid = Math.floor(text.length / 2);
-            let word_index = 1;
-            let n_chars = words[0].length;
-            while (n_chars < mid && word_index < words.length) {
-                n_chars += words[word_index].length + 1;
-                word_index++;
-            }
 
-            let line1 = words.slice(0, word_index).join(' ');
-            let line2 = words.slice(word_index).join(' ');
+            // We try 1, 2, .. 5 lines
+            for (let nLines = 1; nLines <= 5; nLines++) {
+                // Divide the text into nLines parts
+                // Brute-force approach to find the optimal wrapping
+                // The optimal wrapping is the one that minimizes the lenght of the longest line
+                // and the lenght of the second longest line if there is a tie, etc.
+                
+                // We try all possible ways to split the sentence into nLines lines
+                // A way to wrap the text into nLines lines is defined by (nWords1, nWords2, ..., nWordsN)
+                // where nWords1 is the number of words in the first line, ...
+                // compositions function from utils.js
+                let bestComp = null;
+                let bestLineLengths = Array(nLines).fill(Infinity);
+                for (let comp of compositions(words.length, nLines)) {
+                    let lineLengths = [];
+                    for (let lineIdx = 0, wordIdx = 0; lineIdx < nLines; lineIdx++) {
+                        const line = words.slice(wordIdx, wordIdx + comp[lineIdx]).join(' ');
+                        lineLengths.push(line.length);
+                        wordIdx += comp[lineIdx];
+                    }
+                    // Sort line lengths in descending order for comparison
+                    lineLengths.sort((a, b) => b - a);
+                    // If this composition is better, we keep it
+                    for (let i = 0; i < nLines; i++) {
+                        if (lineLengths[i] > bestLineLengths[i]) break;
+                        // If equal, continue to next line
+                        if (lineLengths[i] < bestLineLengths[i]) {
+                            bestComp = comp;
+                            bestLineLengths = lineLengths;
+                            break;
+                        }
+                    }
+                }
 
-            if (line1.length > 19 || line2.length > 19) {
-                // On essaie avec un mot de moins dans la première ligne
-                line1 = words.slice(0, word_index - 1).join(' ');
-                line2 = words.slice(word_index - 1).join(' ');
-                if (line1.length > 19 || line2.length > 19) {
-                    throw new Error("Le texte est trop long pour tenir sur deux lignes.");
+                // Build the lines from the best composition found
+                lines = [];
+                for (let lineIdx = 0, wordIdx = 0; lineIdx < nLines; lineIdx++) {
+                    const line = words.slice(wordIdx, wordIdx + bestComp[lineIdx]).join(' ');
+                    lines.push(line);
+                    wordIdx += bestComp[lineIdx];
+                }
+
+                // Find the font size that fits the longest line
+                fontSize = maxFontSize * 19 / bestLineLengths[0];
+
+                // How many lines can we fit with this font size? = 2 / (fontSize / maxFontSize) 
+                // If it is more than nLines, we add one line, otherwise we found our solution
+                if (Math.floor(2.6 * maxFontSize / fontSize) <= nLines || nLines === 5) {
+                    fontSize = Math.min(fontSize, maxFontSize, maxFontSize * 2.6 / nLines);
+                    break;
                 }
             }
-            
-            return [line1, line2];
         }
+
+        return {
+            fontSize: fontSize,
+            wrappedText: lines,
+        };
     }
 
     // Generate the complete panel
@@ -132,8 +171,7 @@ class PanelGenerator {
         const widthLaRegion = 0.71 * scale;
 
         // Wrap text
-        const wrappedText = this.wrapText(text);
-
+        const {fontSize, wrappedText} = this.wrapText(text);
         // Create SVG container
         const svg = this.createSVGElement('svg', {
             width: heightUp,
@@ -152,17 +190,59 @@ class PanelGenerator {
         defs.appendChild(style);
         svg.appendChild(defs);
 
+
         // Blue rounded rectangle (top)
+        // Contains the logo and region text
+        const blueRectGroup = this.createSVGElement('g');
         const blueRect = this.createSVGElement('path', {
             fill: this.colors.blue,
             d: `M${r + e/2},${e/2} h${heightUp - 2*r - e} a${r},${r} 0 0 1 ${r},${r} v${heightUp - r - e/2} h-${heightUp - e} v-${heightUp - r - e/2} a${r},${r} 0 0 1 ${r},-${r}`
         });
+        blueRectGroup.appendChild(blueRect);
+        blueRectGroup.appendChild(this.logo(heightLogo, (heightUp - heightLogo) / 2, 0.16 * scale));
+        blueRectGroup.appendChild(this.laRegion(widthLaRegion, (heightUp - widthLaRegion) / 2, 0.6 * scale));
+
 
         // White rounded rectangle (bottom)
+        // Contains the custom text
+        const whiteRectGroup = this.createSVGElement('g', {
+            textanchor: 'middle'
+        });
+        // White rectangle
         const whiteRect = this.createSVGElement('path', {
             fill: this.colors.white,
             d: `M${e/2},${heightUp} h${heightUp - e} v${heightDown - r - e/2} a${r},${r} 0 0 1 -${r},${r} h-${heightUp - 2*r - e} a${r},${r} 0 0 1 -${r},-${r} z`
         });
+        // Custom text - positioned in the center of the white rectangle
+        const textY = heightUp + heightDown / 2; // Middle of white rectangle
+        const customText = this.createSVGElement('text', {
+            x: heightUp / 2,
+            y: textY,
+            'font-family': "'Graphik', 'Inter', 'Segoe UI', Arial, sans-serif",
+            'font-weight': 'bold',
+            'font-size': fontSize * scale,
+            fill: this.colors.black,
+            'text-anchor': 'middle',
+            'dominant-baseline': 'middle',
+            class: 'panel-text'
+        });
+        
+        // Add tspans for each line of wrapped text
+        const lineHeight = fontSize * scale * 1.2;
+        const totalTextHeight = (wrappedText.length - 1) * lineHeight;
+        const firstLineY = -totalTextHeight / 2;
+        
+        for (let i = 0; i < wrappedText.length; i++) {
+            const tspan = this.createSVGElement('tspan', {
+                x: heightUp / 2,
+                dy: i === 0 ? firstLineY : lineHeight
+            });
+            tspan.textContent = wrappedText[i];
+            customText.appendChild(tspan);
+        }
+        whiteRectGroup.appendChild(whiteRect);
+        whiteRectGroup.appendChild(customText);
+
 
         // Grey border
         const border = this.createSVGElement('rect', {
@@ -177,45 +257,10 @@ class PanelGenerator {
             ry: r
         });
 
-        // Logo
-        const logoElement = this.logo(heightLogo, (heightUp - heightLogo) / 2, 0.16 * scale);
-
-        // Region text
-        const regionElement = this.laRegion(widthLaRegion, (heightUp - widthLaRegion) / 2, 0.6 * scale);
-
-        // Custom text
-        const customText = this.createSVGElement('text', {
-            x: heightUp / 2,
-            y: heightUp + 0.4 * heightDown,
-            'font-family': "'Graphik', 'Inter', 'Segoe UI', Arial, sans-serif",
-            'font-weight': 'bold',
-            'font-size': 0.09 * scale,
-            fill: this.colors.black,
-            'text-anchor': 'middle',
-            class: 'panel-text'
-        });
-
-        const tspan1 = this.createSVGElement('tspan', {
-            x: heightUp / 2
-        });
-        tspan1.textContent = wrappedText[0];
-
-        const tspan2 = this.createSVGElement('tspan', {
-            x: heightUp / 2,
-            dy: '1.2em'
-        });
-        tspan2.textContent = wrappedText[1];
-
-        customText.appendChild(tspan1);
-        customText.appendChild(tspan2);
-
         // Assemble SVG
-        svg.appendChild(blueRect);
-        svg.appendChild(whiteRect);
+        svg.appendChild(blueRectGroup);
+        svg.appendChild(whiteRectGroup);
         svg.appendChild(border);
-        svg.appendChild(logoElement);
-        svg.appendChild(regionElement);
-        svg.appendChild(customText);
 
         return svg;
     }
