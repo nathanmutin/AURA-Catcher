@@ -49,8 +49,8 @@ export function wrapText(text: string, maxFontSize: number = 0.09): WrappedText 
         let bestComp: number[] | null = null;
         let bestLineLengths: number[] = Array(nLines).fill(Infinity);
 
-        for (let comp of compositions(words.length, nLines)) {
-            let lineLengths: number[] = [];
+        for (const comp of compositions(words.length, nLines)) {
+            const lineLengths: number[] = [];
             for (let lineIdx = 0, wordIdx = 0; lineIdx < nLines; lineIdx++) {
                 const line = words.slice(wordIdx, wordIdx + comp[lineIdx]).join(' ');
                 lineLengths.push(line.length);

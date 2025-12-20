@@ -8,8 +8,11 @@ export interface Panneau {
     createdAt: string;
 }
 
+
+const BASE_URL = import.meta.env.VITE_API_URL || '';
+
 export const fetchPanneaux = async (): Promise<Panneau[]> => {
-    const response = await fetch('/api/panneaux');
+    const response = await fetch(`${BASE_URL}/api/panneaux`);
     if (!response.ok) {
         throw new Error('Failed to fetch panneaux');
     }
@@ -17,7 +20,7 @@ export const fetchPanneaux = async (): Promise<Panneau[]> => {
 };
 
 export const createPanneau = async (formData: FormData): Promise<Panneau> => {
-    const response = await fetch('/api/panneaux', {
+    const response = await fetch(`${BASE_URL}/api/panneaux`, {
         method: 'POST',
         body: formData,
     });

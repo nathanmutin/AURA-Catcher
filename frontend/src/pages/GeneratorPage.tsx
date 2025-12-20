@@ -13,14 +13,17 @@ const GeneratorPage: React.FC = () => {
 
     // Sync URL with text (debounced effect could be added, but simple update is fine for now)
     useEffect(() => {
-        const params = new URLSearchParams(searchParams);
-        if (text) {
-            params.set('text', text);
-        } else {
-            params.delete('text');
+        const currentText = searchParams.get('text');
+        if (currentText !== text) {
+            const params = new URLSearchParams(searchParams);
+            if (text) {
+                params.set('text', text);
+            } else {
+                params.delete('text');
+            }
+            setSearchParams(params, { replace: true });
         }
-        setSearchParams(params, { replace: true });
-    }, [text, setSearchParams]);
+    }, [text, searchParams, setSearchParams]);
 
     // Calculate layout
     const layout = useMemo(() => calculatePanelLayout(text), [text]);

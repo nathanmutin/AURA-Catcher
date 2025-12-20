@@ -12,7 +12,9 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+const BASE_URL = import.meta.env.VITE_API_URL || '';
+
+delete (L.Icon.Default.prototype as L.Icon.Default & { _getIconUrl?: () => string })._getIconUrl;
 L.Icon.Default.mergeOptions({
     iconRetinaUrl: markerIcon2x,
     iconUrl: markerIcon,
@@ -41,16 +43,17 @@ const MapPage: React.FC = () => {
     const [isPickingLocation, setIsPickingLocation] = useState(false);
     const [pickedLocation, setPickedLocation] = useState<{ lat: number; lng: number } | null>(null);
 
-    const loadPanneaux = async () => {
-        try {
-            const data = await fetchPanneaux();
-            setPanneaux(data);
-        } catch (error) {
-            console.error('Failed to load panneaux:', error);
-        }
-    };
+
 
     useEffect(() => {
+        const loadPanneaux = async () => {
+            try {
+                const data = await fetchPanneaux();
+                setPanneaux(data);
+            } catch (error) {
+                console.error('Failed to load panneaux:', error);
+            }
+        };
         loadPanneaux();
     }, []);
 
@@ -66,7 +69,8 @@ const MapPage: React.FC = () => {
     };
 
     const handleSuccess = () => {
-        loadPanneaux();
+        // Reload locally for now
+        fetchPanneaux().then(setPanneaux).catch(console.error);
         // Could add toast here
     };
 
@@ -86,7 +90,7 @@ const MapPage: React.FC = () => {
                     <Marker key={panneau.id} position={[panneau.lat, panneau.lng]}>
                         <Popup>
                             <div className="popup-content">
-                                <img src={panneau.imageUrl} alt="Panneau" className="popup-img" />
+                                <img src={BASE_URL+panneau.imageUrl} alt="Panneau" className="popup-img" />
                                 <p>{panneau.comment}</p>
                                 <small>Par {panneau.author || 'Anonyme'}</small>
                             </div>

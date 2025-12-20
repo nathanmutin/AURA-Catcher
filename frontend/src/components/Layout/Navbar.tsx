@@ -1,14 +1,16 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Map, SquarePen } from 'lucide-react';
-import './Navbar.css'; // We'll create this
+import './Navbar.css';
+
+import iconSvg from '../../assets/icon.svg';
 
 const Navbar: React.FC = () => {
     return (
         <>
             {/* Mobile Header (Logo) */}
             <div className="mobile-header">
-                <img src="/src/assets/icon.svg" alt="Logo" className="logo-img" />
+                <img src={iconSvg} alt="Logo" className="logo-img" />
                 <span className="logo-text">AURA Catcher</span>
             </div>
 
@@ -28,7 +30,7 @@ const Navbar: React.FC = () => {
             <nav className="desktop-nav">
                 <div className="logo">
                     {/* SVG icon in src/assets/icon.svg */}
-                    <img src="/src/assets/icon.svg" alt="Logo" className="logo-img" />
+                    <img src={iconSvg} alt="Logo" className="logo-img" />
                     <span className="logo-text">AURA Catcher</span>
                 </div>
                 <div className="nav-links">

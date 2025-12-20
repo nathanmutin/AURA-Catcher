@@ -2,12 +2,14 @@ import sqlite3 from 'sqlite3';
 import { open, Database } from 'sqlite';
 import path from 'path';
 
+const dbpath: string = '../../data/database.sqlite';
+
 let db: Database | null = null;
 
 export const initDb = async () => {
   if (db) return db;
 
-  const dbPath = path.resolve(__dirname, '../../data/database.sqlite');
+  const dbPath = path.resolve(__dirname, dbpath);
 
   db = await open({
     filename: dbPath,

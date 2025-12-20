@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import heic2any from 'heic2any';
 import { Camera, MapPin, X } from 'lucide-react';
 import { getGPSFromImage } from '../../utils/geo';
 import { createPanneau } from '../../api/client';
@@ -17,6 +18,7 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
     const [preview, setPreview] = useState<string | null>(null);
     const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [loading, setLoading] = useState(false);
+    const [isConverting, setIsConverting] = useState(false);
     const [comment, setComment] = useState('');
     const [author, setAuthor] = useState('');
 
@@ -30,11 +32,40 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            const selectedFile = e.target.files[0];
-            setFile(selectedFile);
-            setPreview(URL.createObjectURL(selectedFile));
+            const originalFile = e.target.files[0];
+            let fileToUpload = originalFile;
 
-            const gps = await getGPSFromImage(selectedFile);
+            // Check for HEIC
+            if (originalFile.type === 'image/heic' || originalFile.type === 'image/heif' || originalFile.name.toLowerCase().endsWith('.heic')) {
+                setIsConverting(true);
+                try {
+                    const convertedBlob = await heic2any({
+                        blob: originalFile,
+                        toType: 'image/jpeg',
+                        quality: 0.8
+                    });
+
+                    // heic2any can return an array if the HEIC has multiple images
+                    const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+
+                    fileToUpload = new File([blob], originalFile.name.replace(/\.(heic|heif)$/i, '.jpg'), {
+                        type: 'image/jpeg'
+                    });
+                } catch (error) {
+                    console.error("HEIC conversion failed", error);
+                    alert("Impossible de convertir l'image HEIC.");
+                    setIsConverting(false);
+                    return;
+                } finally {
+                    setIsConverting(false);
+                }
+            }
+
+            setFile(fileToUpload);
+            setPreview(URL.createObjectURL(fileToUpload));
+
+            // Use original file for GPS to preserve EXIF data
+            const gps = await getGPSFromImage(originalFile);
             if (gps) {
                 setLocation(gps);
             }
@@ -86,7 +117,11 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
                 <form onSubmit={handleSubmit}>
                     {/* Image Upload Area */}
                     <div className="upload-area" onClick={() => fileInputRef.current?.click()}>
-                        {preview ? (
+                        {isConverting ? (
+                            <div className="upload-placeholder">
+                                <p>Conversion du format HEIC...</p>
+                            </div>
+                        ) : preview ? (
                             <img src={preview} alt="Preview" className="upload-preview" />
                         ) : (
                             <div className="upload-placeholder">
