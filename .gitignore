@@ -1,3 +1,6 @@
+.env
+backups
+
 # Logs
 logs
 *.log

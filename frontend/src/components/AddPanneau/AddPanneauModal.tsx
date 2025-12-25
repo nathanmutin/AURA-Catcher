@@ -20,7 +20,6 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
     const [loading, setLoading] = useState(false);
     const [isConverting, setIsConverting] = useState(false);
     const [comment, setComment] = useState('');
-    const [author, setAuthor] = useState('');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -82,7 +81,6 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
         formData.append('lat', location.lat.toString());
         formData.append('lng', location.lng.toString());
         formData.append('comment', comment);
-        formData.append('author', author);
 
         try {
             await createPanneau(formData);
@@ -101,7 +99,6 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
         setPreview(null);
         setLocation(null);
         setComment('');
-        setAuthor('');
         onClose();
     };
 
@@ -171,16 +168,6 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
                             value={comment}
                             onChange={e => setComment(e.target.value)}
                             placeholder="Ex: Près de la mairie"
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Auteur</label>
-                        <input
-                            type="text"
-                            value={author}
-                            onChange={e => setAuthor(e.target.value)}
-                            placeholder="Votre nom/pseudo"
                         />
                     </div>
 

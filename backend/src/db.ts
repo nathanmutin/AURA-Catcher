@@ -1,38 +1,67 @@
-import sqlite3 from 'sqlite3';
-import { open, Database } from 'sqlite';
-import path from 'path';
+import mariadb from 'mariadb';
 
-const dbpath: string = '../../data/database.sqlite';
-
-let db: Database | null = null;
+const pool = mariadb.createPool({
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT || '3306'),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  connectionLimit: 5
+});
 
 export const initDb = async () => {
-  if (db) return db;
+  let conn;
+  try {
+    conn = await pool.getConnection();
 
-  const dbPath = path.resolve(__dirname, dbpath);
+    // Create users table
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(255) NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-  db = await open({
-    filename: dbPath,
-    driver: sqlite3.Database
-  });
+    // Create panneaux table
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS panneaux (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        lat REAL NOT NULL,
+        lng REAL NOT NULL,
+        comment TEXT,
+        author_id INT,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (author_id) REFERENCES users(id)
+      )
+    `);
 
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS panneaux (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      lat REAL NOT NULL,
-      lng REAL NOT NULL,
-      imageUrl TEXT NOT NULL,
-      comment TEXT,
-      author TEXT,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+    // Create images table
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS images (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        fileNameOriginal VARCHAR(255) NOT NULL,
+        fileNameSmall VARCHAR(255) NOT NULL,
+        panneau_id INT NOT NULL,
+        author_id INT,
+        main_image BOOLEAN NOT NULL,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (panneau_id) REFERENCES panneaux(id),
+        FOREIGN KEY (author_id) REFERENCES users(id)
+      )
+    `);
 
-  console.log('Database initialized at', dbPath);
-  return db;
+    console.log('Database initialized');
+  } catch (err) {
+    console.error('Error initializing database:', err);
+    throw err;
+  } finally {
+    if (conn) conn.release();
+  }
 };
 
-export const getDb = async () => {
-  if (!db) await initDb();
-  return db!;
+export const getPool = () => {
+  return pool;
 };

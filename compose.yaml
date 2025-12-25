@@ -1,0 +1,40 @@
+services:
+  aura-catcher-mariadb:
+    image: mariadb:latest
+    container_name: aura-catcher-mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - aura-catcher-mariadb_data:/var/lib/mysql
+    restart: always
+
+  aura-catcher-backend:
+    build: ./backend
+    container_name: aura-catcher-backend
+    environment:
+      DB_HOST: aura-catcher-mariadb
+      DB_PORT: 3306 # Default mariadb port
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    volumes:
+      - aura-catcher-backend_data:/usr/src/data
+    depends_on:
+      - aura-catcher-mariadb
+    restart: always
+
+  aura-catcher-frontend:
+    build: ./frontend
+    container_name: aura-catcher-frontend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - aura-catcher-backend
+    restart: always
+
+volumes:
+  aura-catcher-mariadb_data:
+  aura-catcher-backend_data:

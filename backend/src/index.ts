@@ -1,24 +1,36 @@
+import 'dotenv/config';
 import express from 'express';
-import path from 'path';
 import fs from 'fs';
 import routes from './routes';
 import { initDb } from './db';
+import { PHOTOS_DIR, TEMP_DIR, ORIGINAL_DIR, SMALL_DIR } from './config';
 
+/**
+ * Main application entry point.
+ * Configures Express server, static file serving for uploads, and API routes.
+ */
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Ensure uploads dir
-const uploadsDir = path.join(__dirname, '../../data/uploads');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir);
+// Ensure directories exist
+if (!fs.existsSync(PHOTOS_DIR)) {
+    fs.mkdirSync(PHOTOS_DIR);
 }
+if (!fs.existsSync(TEMP_DIR)) {
+    fs.mkdirSync(TEMP_DIR);
+}
+// We should implies original and small dirs might be created later or here?
+// imageUtils ensures them, but let's be safe or just minimal.
+// Config only required Photos and Temp for basic startup or let imageUtils handle subfolders.
 
 app.get('/', (req, res) => {
-    res.send('AURA Catcher Backend is running. Access API at /api/panneaux');
+    res.send('AURA Catcher Backend is running.');
 });
 
 app.use(express.json());
-app.use('/uploads', express.static(uploadsDir));
+// Serve uploads
+app.use('/photos/original', express.static(ORIGINAL_DIR));
+app.use('/photos/small', express.static(SMALL_DIR));
 app.use('/api', routes);
 
 initDb().then(() => {
