@@ -1,50 +1,74 @@
 # AURA Catcher
 
-A web application to reference "La Région aide..." panneaux, complemented by the **AURA Farmer** tool for generating custom panneaux.
+## Getting Started
 
-## Features
+### Prerequisites
 
-- **Interactive Map**: Display panneaux on a map with details and photos.
-- **AURA Farmer (Panneau Generator)**: A pixel-perfect tool to create custom "La Région" panels.
-    - **Ported Logic**: The generation logic (geometry, text wrapping) is a direct port from the original "Old AURA Farmer" project, ensuring 100% visual fidelity.
-    - **Shareable Links**: Panel text is synced to the URL for easy sharing.
-    - **SVG Download**: Download high-quality vector images of your custom panneaux.
-- **Mobile First**: Designed for use on the go.
+- **Node.js**: v18 or higher
+- **MariaDB**: Required for local development.
+- **Docker**: Required for production deployment.
 
-## Tech Stack
+### Configuration
 
-- **Framework**: React + TypeScript + Vite
-- **Styling**: Vanilla CSS (Mobile-first design)
-- **Icons**: Lucide React
+1.  **Backend**:
+    -   Navigate to `backend/`.
+    -   Copy `.env.example` to `.env`.
+    -   Fill in your database credentials:
+        ```ini
+        DB_HOST=localhost
+        DB_PORT=3306
+        DB_USER=root
+        DB_PASSWORD=your_password
+        DB_NAME=aura_catcher
+        ```
 
-3.  Run the development server for both frontend and backend:
-    ```bash
-    npm run dev
-    ```
-    - Frontend: [http://localhost:5173](http://localhost:5173)
-    - Backend: [http://localhost:3000](http://localhost:3000)
+2.  **Frontend**:
+    -   Navigate to `frontend/`.
+    -   Copy `.env.example` to `.env.local`.
+    -   Ensure the API URL matches your backend:
+        ```ini
+        VITE_API_URL=http://localhost:3000
+        ```
 
-## Backend Setup (Manual)
+### Development Setup (Manual)
 
-If you prefer to run them separately:
+If you want to run the application locally without Docker:
 
-The project includes a Node.js + Express backend (SQLite) to handle panneau uploads and map data.
+1.  **Database Setup**:
+    -   Start your local MariaDB server.
+    -   Create the database using a SQL client or CLI:
+        ```sql
+        CREATE DATABASE aura_catcher;
+        ```
 
-1.  Navigate to the backend directory:
+2.  **Start Backend**:
     ```bash
     cd backend
-    ```
-
-2.  Install backend dependencies:
-    ```bash
     npm install
-    ```
-
-3.  Run the backend server:
-    ```bash
     npm run dev
     ```
-    The server will start on [http://localhost:3000](http://localhost:3000).
+    The backend will start on [http://localhost:3000](http://localhost:3000).
+
+3.  **Start Frontend**:
+    ```bash
+    cd frontend
+    npm install
+    npm run dev
+    ```
+    The frontend will start on [http://localhost:5174](http://localhost:5174) (or the port shown in your terminal).
+
+### Production Setup (Docker)
+
+To run the entire stack (Frontend, Backend, and MariaDB) in containers:
+
+1.  From the project root:
+    ```bash
+    docker compose --env-file ./backend/.env up --build
+    ```
+
+2.  Access the application:
+    -   **Frontend**: [http://localhost:8080](http://localhost:8080)
+    -   **Backend**: Internal only.
 
 ## Project Structure
 

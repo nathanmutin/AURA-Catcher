@@ -17,8 +17,7 @@ services:
       dockerfile: ./Dockerfile
     container_name: aura-catcher-backend
     environment:
-      DB_HOST: aura-catcher-mariadb
-      DB_PORT: 3306 # Default mariadb port
+      DB_HOST: aura-catcher-mariadb # Override 'localhost' 
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}

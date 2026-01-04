@@ -1,5 +1,6 @@
-.env
+**/.env
 backups
+data
 
 # Logs
 logs
