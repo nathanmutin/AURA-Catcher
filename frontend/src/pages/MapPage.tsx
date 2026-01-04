@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { fetchPanneaux, type Panneau } from '../api/client';
+import type { Panneau } from '../../../backend/src/types.ts';
+import { fetchPanneaux } from '../api/client';
 import L from 'leaflet';
 import { Plus } from 'lucide-react';
 import AddPanneauModal from '../components/AddPanneau/AddPanneauModal.tsx';

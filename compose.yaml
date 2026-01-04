@@ -12,7 +12,9 @@ services:
     restart: always
 
   aura-catcher-backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: ./Dockerfile
     container_name: aura-catcher-backend
     environment:
       DB_HOST: aura-catcher-mariadb
@@ -27,7 +29,10 @@ services:
     restart: always
 
   aura-catcher-frontend:
-    build: ./frontend
+    build:
+      # frontend needs the full context because it uses backend/src/types.ts
+      context: .
+      dockerfile: ./frontend/Dockerfile
     container_name: aura-catcher-frontend
     ports:
       - "8080:8080"

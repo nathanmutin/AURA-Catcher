@@ -3,6 +3,7 @@ import { getPool } from './db';
 import multer from 'multer';
 import { processImage } from './imageUtils';
 import { TEMP_DIR } from './config';
+import { Panneau } from './types';
 
 const router = Router();
 
@@ -38,14 +39,24 @@ router.get('/panneaux', async (req, res) => {
             ORDER BY p.createdAt DESC
         `);
 
-        const panneaux = rows.map((row: any) => ({
+        interface PanneauRow {
+            id: number;
+            lat: number;
+            lng: number;
+            comment: string | null;
+            createdAt: Date;
+            fileNameSmall: string | null;
+            author: string | null;
+        }
+
+        const panneaux: Panneau[] = rows.map((row: PanneauRow) => ({
             id: row.id,
             lat: row.lat,
             lng: row.lng,
-            comment: row.comment,
-            createdAt: row.createdAt,
-            author: row.username,
-            imageUrl: row.fileNameSmall ? `/photos/small/${row.fileNameSmall}` : null
+            comment: row.comment || undefined,
+            createdAt: row.createdAt.toISOString(),
+            author: row.author || undefined,
+            imageUrl: row.fileNameSmall ? `/photos/small/${row.fileNameSmall}` : ''
         }));
 
         res.json(panneaux);
