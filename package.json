@@ -5,9 +5,15 @@
         "install:all": "npm install && npm install --prefix frontend && npm install --prefix backend",
         "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\"",
         "build": "npm run build --prefix frontend && npm run build --prefix backend",
-        "start": "concurrently \"npm run start --prefix frontend\" \"npm run start --prefix backend\""
+        "lint": "eslint ."
     },
     "devDependencies": {
-        "concurrently": "^9.1.0"
+        "@eslint/js": "^9.39.2",
+        "concurrently": "^9.1.0",
+        "eslint": "^9.39.2",
+        "eslint-plugin-react-hooks": "^7.0.1",
+        "eslint-plugin-react-refresh": "^0.4.26",
+        "globals": "^17.0.0",
+        "typescript-eslint": "^8.51.0"
     }
 }
