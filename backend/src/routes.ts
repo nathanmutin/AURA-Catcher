@@ -32,30 +32,30 @@ router.get('/panneaux', async (req, res) => {
             SELECT 
                 p.id, p.lat, p.lng, p.comment, p.createdAt,
                 i.fileNameSmall,
-                u.username as author
+                u.username
             FROM panneaux p
             LEFT JOIN images i ON p.id = i.panneau_id AND i.main_image = 1
             LEFT JOIN users u ON p.author_id = u.id
             ORDER BY p.createdAt DESC
         `);
 
-        interface PanneauRow {
+        interface Row {
             id: number;
             lat: number;
             lng: number;
             comment: string | null;
             createdAt: Date;
             fileNameSmall: string | null;
-            author: string | null;
+            username: string | null;
         }
 
-        const panneaux: Panneau[] = rows.map((row: PanneauRow) => ({
+        const panneaux: Panneau[] = rows.map((row: Row) => ({
             id: row.id,
             lat: row.lat,
             lng: row.lng,
             comment: row.comment || undefined,
             createdAt: row.createdAt.toISOString(),
-            author: row.author || undefined,
+            author: row.username || undefined,
             imageUrl: row.fileNameSmall ? `/photos/small/${row.fileNameSmall}` : ''
         }));
 
