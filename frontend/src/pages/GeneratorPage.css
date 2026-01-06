@@ -1,0 +1,54 @@
+.generator-page {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    /*margin-top: 60px;*/
+    /* Clear fixed header */
+    min-height: calc(100vh - 80px);
+    /* Ensure full height */
+}
+
+/* Controls Removed */
+
+.preview-panel {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0;
+    gap: 1rem;
+    /* background: #e2e8f0; REMOVED per user request */
+    /* border-radius: 24px; REMOVED */
+    /* overflow: hidden; REMOVED to fix mobile clipping */
+}
+
+/* The Panneau Visuals */
+.panneau-wrapper {
+    width: 100%;
+    max-width: 300px;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    /* Ensure wrapper is relative for absolute children */
+}
+
+/* Overlay Removed */
+
+/* SVG should fill container and have a shadow respecting its shape */
+.panneau-wrapper svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
+}
+
+@media (min-width: 768px) {
+    .generator-page {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+}

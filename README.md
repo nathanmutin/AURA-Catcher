@@ -1,19 +1,54 @@
-# AURA Farmer - Générateur de panneaux AURA
+# AURA Catcher
 
-Générateur de panneaux `La région aide ses communes` que l'on retrouve le long des routes de notre belle région Auvergne-Rhône-Alpes.
+A web application to reference "La Région aide..." panneaux, complemented by the **AURA Farmer** tool for generating custom panneaux.
 
-Les panneaux avec un texte personnalisé sont exportés aux formats SVG et PNG et peuvent être téléchargés individuellement ou en lot.
+## Features
 
-<div class="row">
-    <img src="panneau_1.svg" width="200">
-    <img src="panneau_2.svg" width="200">
-    <img src="panneau_3.svg" width="200">
-</div>
+- **Interactive Map**: Display panneaux on a map with details and photos.
+- **AURA Farmer (Panneau Generator)**: A pixel-perfect tool to create custom "La Région" panels.
+    - **Ported Logic**: The generation logic (geometry, text wrapping) is a direct port from the original "Old AURA Farmer" project, ensuring 100% visual fidelity.
+    - **Shareable Links**: Panel text is synced to the URL for easy sharing.
+    - **SVG Download**: Download high-quality vector images of your custom panneaux.
+- **Mobile First**: Designed for use on the go.
 
-## 🌐 Interface Web
+## Tech Stack
 
-La nouvelle interface web permet de :
-- **Générer des panneaux personnalisés** avec votre propre texte
-- **Ajuster la taille** des panneaux (50px à 400px)
-- **Génération en lot** pour créer plusieurs panneaux d'un coup
-- **Téléchargement individuel et groupé** de tous les panneaux dans un fichier ZIP
+- **Framework**: React + TypeScript + Vite
+- **Styling**: Vanilla CSS (Mobile-first design)
+- **Icons**: Lucide React
+
+3.  Run the development server for both frontend and backend:
+    ```bash
+    npm run dev
+    ```
+    - Frontend: [http://localhost:5173](http://localhost:5173)
+    - Backend: [http://localhost:3000](http://localhost:3000)
+
+## Backend Setup (Manual)
+
+If you prefer to run them separately:
+
+The project includes a Node.js + Express backend (SQLite) to handle panneau uploads and map data.
+
+1.  Navigate to the backend directory:
+    ```bash
+    cd backend
+    ```
+
+2.  Install backend dependencies:
+    ```bash
+    npm install
+    ```
+
+3.  Run the backend server:
+    ```bash
+    npm run dev
+    ```
+    The server will start on [http://localhost:3000](http://localhost:3000).
+
+## Project Structure
+
+- `frontend/`: React + Vite application.
+- `backend/`: Node.js + Express server and data.
+- `frontend/src/utils/panelLayout.ts`: Core logic for calculating the panel SVG geometry (Isomorphic).
+- `frontend/src/utils/panelRenderers.tsx`: React and String renderers for the panel.

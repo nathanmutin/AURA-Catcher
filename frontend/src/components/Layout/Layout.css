@@ -1,0 +1,23 @@
+.layout {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.layout-main {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    /* Default for desktop/map: no extra padding */
+}
+
+/* Mobile Adjustments */
+@media (max-width: 767px) {
+    .layout-main {
+        /* Add padding for fixed header and footer */
+        padding-top: 60px;
+        /* Height of mobile-header */
+        padding-bottom: 60px;
+        /* Height of mobile-nav */
+    }
+}

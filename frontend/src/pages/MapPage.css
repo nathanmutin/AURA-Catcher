@@ -1,0 +1,91 @@
+.map-page {
+    height: 100%;
+    width: 100%;
+    position: relative;
+}
+
+@media (min-width: 768px) {
+    .map-page {
+        padding-bottom: 0;
+        padding-top: 64px;
+        /* Desktop nav */
+    }
+}
+
+.popup-content {
+    text-align: center;
+    min-width: 200px;
+    max-width: 300px;
+    /* Increased */
+}
+
+.popup-img {
+    width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    object-fit: cover;
+}
+
+.fab-add {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--aura-blue);
+    color: white;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 142, 207, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 999;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.fab-add:hover {
+    transform: translateX(-50%) scale(1.1);
+    background-color: var(--aura-blue-dark);
+}
+
+.picking-instruction {
+    position: absolute;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 24px;
+    z-index: 1000;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.picking-instruction button {
+    background: white;
+    color: black;
+    border: none;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+@media (min-width: 768px) {
+    .fab-add {
+        bottom: 2rem;
+        right: 2rem;
+        left: auto;
+        transform: none;
+    }
+
+    .fab-add:hover {
+        transform: scale(1.1);
+    }
+}
