@@ -41,7 +41,6 @@ export interface PanelLayout {
         lines: { text: string; x: number; y: number; }[];
         fontSize: number;
         fill: string;
-        scale: number; // to scale font size from relative to pixels
     };
     border: {
         x: number;
@@ -140,7 +139,6 @@ export function calculatePanelLayout(text: string, scale: number = 200): PanelLa
             lines: textLines,
             fontSize: fontSize * scale,
             fill: COLORS.black,
-            scale: scale
         },
         border: {
             x: e / 2,

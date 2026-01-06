@@ -38,7 +38,7 @@ export function renderPanelToReact(
                 {editing ? (
                     <foreignObject
                         x={layout.border.x}
-                        y={layout.height - (layout.height * 0.32 * 0.95)} /* Approximate Y start of white area */
+                        y={layout.height - (layout.height * 0.235)} /* Approximate Y start of white area */
                         width={layout.border.width}
                         height={layout.height * 0.32}
                         style={{ overflow: 'visible' }} // Ensure content can be seen
@@ -58,6 +58,7 @@ export function renderPanelToReact(
                                 onChange={(e) => editing.onChange(e.target.value.replace(/\n/g, ' '))}
                                 style={{
                                     width: '100%',
+                                    height: '100%',
                                     background: 'transparent',
                                     border: 'none',
                                     outline: 'none',
@@ -66,7 +67,7 @@ export function renderPanelToReact(
                                     fontFamily: "'Graphik', 'Inter', 'Segoe UI', Arial, sans-serif",
                                     fontWeight: 'bold',
                                     fontSize: `${layout.customText.fontSize}px`,
-                                    lineHeight: 1.2,
+                                    lineHeight: `${layout.customText.fontSize * 1.2}px`,
                                     color: layout.customText.fill,
                                     overflow: 'hidden',
                                     padding: 0,

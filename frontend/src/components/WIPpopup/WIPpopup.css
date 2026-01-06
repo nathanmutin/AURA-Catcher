@@ -1,0 +1,95 @@
+.wip-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+
+.wip-popup-content {
+    background: white;
+    padding: 2rem 1.5rem 1.5rem;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    max-width: 90%;
+    width: 280px;
+    text-align: center;
+    position: relative;
+    animation: popupFadeIn 0.3s ease-out;
+}
+
+@keyframes popupFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.wip-title {
+    margin-top: 0;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.wip-message {
+    color: var(--aura-grey);
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.github-link {
+    display: inline-block;
+    color: var(--aura-blue);
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--aura-blue);
+    border-radius: 99px;
+    transition: all 0.2s;
+}
+
+.github-link:hover {
+    background-color: var(--aura-blue);
+    color: white;
+}
+
+.region-panel-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0;
+    /* SVGs are responsive/contained by the container */
+}
+
+.close-icon {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--aura-grey);
+    padding: 0.25rem;
+    border-radius: 50%;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-icon:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--text-primary);
+}
