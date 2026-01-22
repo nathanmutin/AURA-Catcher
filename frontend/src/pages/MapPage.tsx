@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { fetchPanneaux, type Panneau } from '../api/client';
+import type { Panneau } from '../../../backend/src/types.ts';
+import { fetchPanneaux } from '../api/client';
 import L from 'leaflet';
+import { LocateControl } from "leaflet.locatecontrol";
+import "leaflet.locatecontrol/dist/L.Control.Locate.min.css";
 import { Plus } from 'lucide-react';
 import AddPanneauModal from '../components/AddPanneau/AddPanneauModal.tsx';
 import './MapPage.css';
@@ -11,8 +14,6 @@ import './MapPage.css';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-
-const BASE_URL = import.meta.env.VITE_API_URL || '';
 
 delete (L.Icon.Default.prototype as L.Icon.Default & { _getIconUrl?: () => string })._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -35,6 +36,57 @@ const MapEvents: React.FC<MapEventsProps> = ({ onMapClick, isActive }) => {
         },
     });
     return null;
+};
+
+const LocationControl = () => {
+    const map = useMap();
+
+    useEffect(() => {
+        const lc = new LocateControl({
+            locateOptions: {
+                enableHighAccuracy: true
+            }
+        });
+        lc.addTo(map);
+        // lc.start(); // Optional: if you want it to start automatically
+
+        return () => {
+            lc.remove();
+        };
+    }, [map]);
+
+    return null;
+};
+
+const PanneauMarker: React.FC<{ panneau: Panneau }> = ({ panneau }) => {
+    const map = useMap();
+    return (
+        <Marker
+            position={[panneau.lat, panneau.lng]}
+            eventHandlers={{
+                click: () => {
+                    const mapSize = map.getSize();
+                    // To place the marker at 3/4 of the viewport height (near the bottom),
+                    // we need the center of the map to be 1/4 of the viewport height ABOVE the marker.
+
+                    const targetCenterPoint = map.latLngToContainerPoint([panneau.lat, panneau.lng]);
+                    targetCenterPoint.y -= mapSize.y * 0.2;
+
+                    const newCenter = map.containerPointToLatLng(targetCenterPoint);
+
+                    map.flyTo(newCenter, map.getZoom());
+                },
+            }}
+        >
+            <Popup>
+                <div className="popup-content">
+                    <img src={panneau.imageUrl} alt="Panneau" className="popup-img" />
+                    <p>{panneau.comment}</p>
+                    <small>Par {panneau.author || 'Anonyme'}</small>
+                </div>
+            </Popup>
+        </Marker>
+    );
 };
 
 const MapPage: React.FC = () => {
@@ -87,18 +139,11 @@ const MapPage: React.FC = () => {
                 />
 
                 {panneaux.map((panneau) => (
-                    <Marker key={panneau.id} position={[panneau.lat, panneau.lng]}>
-                        <Popup>
-                            <div className="popup-content">
-                                <img src={BASE_URL+panneau.imageUrl} alt="Panneau" className="popup-img" />
-                                <p>{panneau.comment}</p>
-                                <small>Par {panneau.author || 'Anonyme'}</small>
-                            </div>
-                        </Popup>
-                    </Marker>
+                    <PanneauMarker key={panneau.id} panneau={panneau} />
                 ))}
 
                 <MapEvents onMapClick={handleMapClick} isActive={isPickingLocation} />
+                <LocationControl />
             </MapContainer>
 
             {/* FAB */}

@@ -25,6 +25,15 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
+        if (isOpen) {
+            const savedAuthor = localStorage.getItem('lastAuthor');
+            if (savedAuthor) {
+                setAuthor(savedAuthor);
+            }
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
         if (pickedLocation) {
             setLocation(pickedLocation);
         }
@@ -82,7 +91,10 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
         formData.append('lat', location.lat.toString());
         formData.append('lng', location.lng.toString());
         formData.append('comment', comment);
-        formData.append('author', author);
+        if (author) {
+            formData.append('author', author);
+            localStorage.setItem('lastAuthor', author);
+        }
 
         try {
             await createPanneau(formData);
@@ -101,7 +113,8 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
         setPreview(null);
         setLocation(null);
         setComment('');
-        setAuthor('');
+        // Do not clear author to keep it for next time in the same session if they reopen?
+        // Actually useEffect resets it from localStorage on open, so safe to clear or keep.
         onClose();
     };
 
@@ -165,22 +178,22 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
                     </div>
 
                     <div className="form-group">
+                        <label>Auteur (pseudo)</label>
+                        <input
+                            type="text"
+                            value={author}
+                            onChange={e => setAuthor(e.target.value)}
+                            placeholder="Votre pseudo"
+                        />
+                    </div>
+
+                    <div className="form-group">
                         <label>Commentaire</label>
                         <input
                             type="text"
                             value={comment}
                             onChange={e => setComment(e.target.value)}
                             placeholder="Ex: Près de la mairie"
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Auteur</label>
-                        <input
-                            type="text"
-                            value={author}
-                            onChange={e => setAuthor(e.target.value)}
-                            placeholder="Votre nom/pseudo"
                         />
                     </div>
 
