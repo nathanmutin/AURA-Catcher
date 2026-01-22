@@ -4,6 +4,7 @@ import fs from 'fs';
 import routes from './routes';
 import { initDb } from './db';
 import { PHOTOS_DIR, TEMP_DIR, ORIGINAL_DIR, SMALL_DIR } from './config';
+import path from 'path';
 
 /**
  * Main application entry point.
@@ -13,15 +14,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Ensure directories exist
-if (!fs.existsSync(PHOTOS_DIR)) {
-    fs.mkdirSync(PHOTOS_DIR);
-}
-if (!fs.existsSync(TEMP_DIR)) {
-    fs.mkdirSync(TEMP_DIR);
-}
-// We should implies original and small dirs might be created later or here?
-// imageUtils ensures them, but let's be safe or just minimal.
-// Config only required Photos and Temp for basic startup or let imageUtils handle subfolders.
+const dirs = [PHOTOS_DIR, TEMP_DIR, path.join(__dirname, '../logs')];
+dirs.forEach(dir => {
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+});
 
 app.get('/', (req, res) => {
     res.send('AURA Catcher Backend is running.');

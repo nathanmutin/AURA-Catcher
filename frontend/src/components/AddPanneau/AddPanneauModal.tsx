@@ -20,8 +20,18 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
     const [loading, setLoading] = useState(false);
     const [isConverting, setIsConverting] = useState(false);
     const [comment, setComment] = useState('');
+    const [author, setAuthor] = useState('');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (isOpen) {
+            const savedAuthor = localStorage.getItem('lastAuthor');
+            if (savedAuthor) {
+                setAuthor(savedAuthor);
+            }
+        }
+    }, [isOpen]);
 
     useEffect(() => {
         if (pickedLocation) {
@@ -81,6 +91,10 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
         formData.append('lat', location.lat.toString());
         formData.append('lng', location.lng.toString());
         formData.append('comment', comment);
+        if (author) {
+            formData.append('author', author);
+            localStorage.setItem('lastAuthor', author);
+        }
 
         try {
             await createPanneau(formData);
@@ -99,6 +113,8 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
         setPreview(null);
         setLocation(null);
         setComment('');
+        // Do not clear author to keep it for next time in the same session if they reopen?
+        // Actually useEffect resets it from localStorage on open, so safe to clear or keep.
         onClose();
     };
 
@@ -159,6 +175,16 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
                         >
                             Choisir sur la carte
                         </button>
+                    </div>
+
+                    <div className="form-group">
+                        <label>Auteur (pseudo)</label>
+                        <input
+                            type="text"
+                            value={author}
+                            onChange={e => setAuthor(e.target.value)}
+                            placeholder="Votre pseudo"
+                        />
                     </div>
 
                     <div className="form-group">

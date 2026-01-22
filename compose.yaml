@@ -3,12 +3,17 @@ services:
     image: mariadb:latest
     container_name: aura-catcher-mariadb
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - aura-catcher-mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: always
 
   aura-catcher-backend:
@@ -24,7 +29,8 @@ services:
     volumes:
       - aura-catcher-backend_data:/usr/src/data
     depends_on:
-      - aura-catcher-mariadb
+      aura-catcher-mariadb:
+        condition: service_healthy
     restart: always
 
   aura-catcher-frontend:

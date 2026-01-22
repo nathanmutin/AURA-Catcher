@@ -108,6 +108,20 @@ To restore data from a previous backup:
 
 **Warning**: Restoring will overwrite the current database and data files with those from the backup.
 
+### Accessing Logs
+
+To view the backend activity logs (panel creation events) when running with Docker:
+
+**View real-time logs (console):**
+```bash
+docker compose logs -f backend
+```
+
+**View the persistent log file:**
+```bash
+docker compose exec backend cat logs/activity.log
+```
+
 ## Roadmap / TODO
 
 - [ ] **Generator**: fix the small issue with the generator (responsive layout, text)

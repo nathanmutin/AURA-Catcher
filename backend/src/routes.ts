@@ -4,6 +4,8 @@ import multer from 'multer';
 import { processImage } from './imageUtils';
 import { TEMP_DIR } from './config';
 import { Panneau } from './types';
+import fs from 'fs';
+import path from 'path';
 
 const router = Router();
 
@@ -17,6 +19,17 @@ const storage = multer.diskStorage({
     }
 });
 const upload = multer({ storage });
+
+async function logAction(message: string) {
+    const timestamp = new Date().toISOString();
+    const logMessage = `[${timestamp}] ${message}`;
+    console.log(logMessage);
+    try {
+        await fs.promises.appendFile(path.join(__dirname, '../logs/activity.log'), logMessage + '\n');
+    } catch (err) {
+        console.error('Failed to write to log file:', err);
+    }
+}
 
 /**
  * GET /api/panneaux
@@ -77,13 +90,14 @@ router.get('/panneaux', async (req, res) => {
  * - lat: Latitude (required)
  * - lng: Longitude (required)
  * - comment: Optional comment
+ * - author: Optional username
  * 
  * @returns {Object} The created billboard object with ID and image URL
  */
 router.post('/panneaux', upload.single('image'), async (req, res) => {
     let conn;
     try {
-        const { lat, lng, comment } = req.body;
+        const { lat, lng, comment, author } = req.body;
         const file = req.file;
 
         if (!file || !lat || !lng) {
@@ -97,25 +111,46 @@ router.post('/panneaux', upload.single('image'), async (req, res) => {
         conn = await getPool().getConnection();
         await conn.beginTransaction();
 
+        let authorId: number | null = null;
+        if (author && typeof author === 'string' && author.trim()) {
+            const username = author.trim();
+            // Check if user exists
+            const userRows = await conn.query('SELECT id FROM users WHERE username = ?', [username]);
+            if (userRows.length > 0) {
+                authorId = userRows[0].id;
+            } else {
+                // Create user
+                const userRes = await conn.query(
+                    'INSERT INTO users (username, password) VALUES (?, ?)',
+                    [username, 'placeholder_password'] // No auth yet
+                );
+                authorId = parseInt(userRes.insertId.toString());
+            }
+        }
+
         // 2. Insert panneau
-        const panneauRes = await conn.query('INSERT INTO panneaux (lat, lng, comment) VALUES (?, ?, ?)',
-            [lat, lng, comment]);
+        const panneauRes = await conn.query('INSERT INTO panneaux (lat, lng, comment, author_id) VALUES (?, ?, ?, ?)',
+            [lat, lng, comment, authorId]);
         const panneauId = panneauRes.insertId;
 
         // 3. Insert image (one row with both versions)
         await conn.query(
-            'INSERT INTO images (fileNameOriginal, fileNameSmall, panneau_id, main_image) VALUES (?, ?, ?, ?)',
-            [fileNameOriginal, fileNameSmall, panneauId, true]
+            'INSERT INTO images (fileNameOriginal, fileNameSmall, panneau_id, main_image, author_id) VALUES (?, ?, ?, ?, ?)',
+            [fileNameOriginal, fileNameSmall, panneauId, true, authorId]
         );
 
         await conn.commit();
 
         const imageUrl = `/photos/small/${fileNameSmall}`;
-        res.status(201).json({ id: parseInt(panneauId.toString()), lat, lng, imageUrl, comment });
+
+        // Log the action
+        logAction(`[NEW PANEL] ID: ${panneauId}, Lat: ${lat}, Lng: ${lng}, Author: ${author || 'Anonymous'}, Image: ${fileNameOriginal}, IP: ${req.ip || 'unknown'}`);
+
+        res.status(201).json({ id: parseInt(panneauId.toString()), lat, lng, imageUrl, comment, author: author || null });
 
     } catch (error) {
         if (conn) await conn.rollback();
-        console.error(error);
+        logAction(`[ERROR] Failed to create panneau: ${error}`);
         res.status(500).json({ error: 'Failed to create panneau' });
     } finally {
         if (conn) conn.release();

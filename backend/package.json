@@ -17,15 +17,14 @@
     "fs-extra": "^11.3.3",
     "mariadb": "^3.4.5",
     "multer": "^2.0.2",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "ts-node-dev": "^2.0.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/fs-extra": "^11.0.4",
     "@types/multer": "^2.0.0",
     "@types/node": "^25.0.3",
-    "@types/sharp": "^0.31.1",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.9.3"
+    "@types/sharp": "^0.31.1"
   }
 }
