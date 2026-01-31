@@ -116,12 +116,12 @@ To view the backend activity logs (panel creation events) when running with Dock
 
 **View real-time logs (console):**
 ```bash
-docker compose logs -f backend
+docker compose logs -f aura-catcher-backend
 ```
 
 **View the persistent log file:**
 ```bash
-docker compose exec backend cat logs/activity.log
+docker compose exec aura-catcher-backend cat logs/activity.log
 ```
 
 ## Roadmap / TODO
