@@ -29,3 +29,19 @@ export const createPanneau = async (formData: FormData): Promise<Panneau> => {
     }
     return response.json();
 };
+
+export const fetchGlobalStats = async (): Promise<{ totalPanels: number; totalContributors: number }> => {
+    const response = await fetch(`${BASE_URL}/api/stats/global`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch global stats');
+    }
+    return response.json();
+};
+
+export const fetchLeaderboard = async (): Promise<Array<{ username: string; count: number }>> => {
+    const response = await fetch(`${BASE_URL}/api/stats/leaderboard`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch leaderboard');
+    }
+    return response.json();
+};

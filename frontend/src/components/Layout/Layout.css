@@ -14,10 +14,14 @@
 /* Mobile Adjustments */
 @media (max-width: 767px) {
     .layout-main {
-        /* Add padding for fixed header and footer */
         padding-top: 60px;
-        /* Height of mobile-header */
         padding-bottom: 60px;
-        /* Height of mobile-nav */
+    }
+}
+
+@media (min-width: 768px) {
+    .layout-main {
+        padding-top: 64px;
+        /* Desktop Nav Height */
     }
 }

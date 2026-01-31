@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Panneau } from '../../../backend/src/types.ts';
@@ -58,10 +59,46 @@ const LocationControl = () => {
     return null;
 };
 
+const MapUrlHandler = () => {
+    const map = useMap();
+    const [searchParams] = useSearchParams();
+
+    useEffect(() => {
+        const lat = searchParams.get('lat');
+        const lng = searchParams.get('lng');
+        const zoom = searchParams.get('zoom');
+
+        if (lat && lng) {
+            const latitude = parseFloat(lat);
+            const longitude = parseFloat(lng);
+            const zoomLevel = zoom ? parseInt(zoom) : 15;
+
+            if (!isNaN(latitude) && !isNaN(longitude)) {
+                map.setView([latitude, longitude], zoomLevel);
+            }
+        }
+    }, [searchParams, map]);
+
+    return null;
+};
+
 const PanneauMarker: React.FC<{ panneau: Panneau }> = ({ panneau }) => {
     const map = useMap();
+    const [searchParams] = useSearchParams();
+    const markerRef = useRef<L.Marker>(null);
+
+    useEffect(() => {
+        const idParam = searchParams.get('panneauId');
+        if (idParam && Number(idParam) === panneau.id) {
+            if (markerRef.current) {
+                markerRef.current.openPopup();
+            }
+        }
+    }, [searchParams, panneau.id]);
+
     return (
         <Marker
+            ref={markerRef}
             position={[panneau.lat, panneau.lng]}
             eventHandlers={{
                 click: () => {
@@ -144,6 +181,7 @@ const MapPage: React.FC = () => {
 
                 <MapEvents onMapClick={handleMapClick} isActive={isPickingLocation} />
                 <LocationControl />
+                <MapUrlHandler />
             </MapContainer>
 
             {/* FAB */}

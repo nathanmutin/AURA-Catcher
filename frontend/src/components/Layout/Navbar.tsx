@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Map, SquarePen } from 'lucide-react';
+import { Map, SquarePen, BarChart } from 'lucide-react';
 import './Navbar.css';
 
 import iconSvg from '../../assets/icon.svg';
@@ -24,6 +24,10 @@ const Navbar: React.FC = () => {
                     <SquarePen size={24} />
                     <span>Générateur</span>
                 </NavLink>
+                <NavLink to="/stats" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                    <BarChart size={24} />
+                    <span>Stats</span>
+                </NavLink>
             </nav>
 
             {/* Desktop Top Bar */}
@@ -39,6 +43,9 @@ const Navbar: React.FC = () => {
                     </NavLink>
                     <NavLink to="/farmer" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                         Générateur
+                    </NavLink>
+                    <NavLink to="/stats" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                        Stats
                     </NavLink>
                 </div>
             </nav>

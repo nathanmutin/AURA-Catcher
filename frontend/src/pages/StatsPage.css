@@ -1,0 +1,170 @@
+.stats-container {
+  padding: 2rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Prevent page-wide horizontal scroll */
+  height: 100%;
+  box-sizing: border-box;
+  width: 100%;
+  /* Ensure width is explicit */
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--aura-blue);
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: var(--text-primary);
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.stats-section {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+/* Table responsiveness */
+.table-container {
+  width: 100%;
+  max-width: 100%;
+  /* Ensure it doesn't overflow parent */
+  display: block;
+  /* Ensure block formatting context */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 1rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  white-space: nowrap;
+  /* Prevent wrapping for cleaner scroll */
+}
+
+/* Base table styles */
+.data-table th,
+.data-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.data-table th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .stats-container {
+    padding: 1rem;
+    overflow-x: hidden;
+    /* Ensure container itself doesn't scroll */
+  }
+
+  /* Force table container to respect viewport width strict */
+  .table-container {
+    max-width: 90vw;
+    /* Safe width to prevent parent overflow */
+    overflow-x: auto;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .stats-grid {
+    gap: 1rem;
+  }
+
+  .stat-value {
+    font-size: 2rem;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .panel-thumb {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+.panel-thumb {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.rank-badge {
+  background-color: var(--aura-blue);
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.rank-1 {
+  background-color: #fbbf24;
+}
+
+/* Gold */
+.rank-2 {
+  background-color: #94a3b8;
+}
+
+/* Silver */
+.rank-3 {
+  background-color: #b45309;
+}
+
+/* Bronze */

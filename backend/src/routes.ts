@@ -157,4 +157,60 @@ router.post('/panneaux', upload.single('image'), async (req, res) => {
     }
 });
 
+
+/**
+ * GET /api/stats/global
+ * Retrieves global statistics: total panels and total contributors.
+ */
+router.get('/stats/global', async (req, res) => {
+    let conn;
+    try {
+        conn = await getPool().getConnection();
+
+        const [panelsCount] = await conn.query('SELECT COUNT(*) as count FROM panneaux');
+        const [contributorsCount] = await conn.query('SELECT COUNT(DISTINCT author_id) as count FROM panneaux WHERE author_id IS NOT NULL');
+
+        res.json({
+            totalPanels: Number(panelsCount.count),
+            totalContributors: Number(contributorsCount.count)
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch global stats' });
+    } finally {
+        if (conn) conn.release();
+    }
+});
+
+/**
+ * GET /api/stats/leaderboard
+ * Retrieves the leaderboard of contributors.
+ */
+router.get('/stats/leaderboard', async (req, res) => {
+    let conn;
+    try {
+        conn = await getPool().getConnection();
+        const rows = await conn.query(`
+            SELECT 
+                u.username,
+                COUNT(p.id) as count
+            FROM panneaux p
+            JOIN users u ON p.author_id = u.id
+            GROUP BY u.id
+            ORDER BY count DESC
+            LIMIT 10
+        `);
+
+        res.json(rows.map((row: any) => ({
+            username: row.username,
+            count: Number(row.count)
+        })));
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch leaderboard' });
+    } finally {
+        if (conn) conn.release();
+    }
+});
+
 export default router;
