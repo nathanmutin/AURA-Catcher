@@ -1,3 +1,4 @@
+C'est stylé ton truc, tu veux rajouter une carte ?
 # AURA Catcher
 
 AURA Catcher is a web application designed to reference "La Région aide..." signs. It features an interactive map where users can view details and photos of signs, and allows for collaborative submissions by uploading photos with automatic geolocation extracted from EXIF data. The project also includes "AURA Farmer," a tool for generating custom signs.
