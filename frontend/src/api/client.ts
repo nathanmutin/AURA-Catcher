@@ -1,13 +1,4 @@
-export interface Panneau {
-    id: number;
-    lat: number;
-    lng: number;
-    imageUrl: string;
-    comment?: string;
-    author?: string;
-    createdAt: string;
-}
-
+import type { Panneau } from '@aura-catcher/shared/api/types';
 
 const BASE_URL = import.meta.env.VITE_API_URL || '';
 

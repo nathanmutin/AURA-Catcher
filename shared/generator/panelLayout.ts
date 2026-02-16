@@ -1,5 +1,5 @@
 import { wrapText } from './textUtils';
-import panelColors from '../colors.css?inline';
+import panelColors from './colors.css?inline';
 
 // Path Data Constants (copied from original source/SVG)
 const PATH_DISK = "M93.79 61.72a33.18 33.18 0 11-33.18-33.18 33.18 33.18 0 0133.18 33.18";

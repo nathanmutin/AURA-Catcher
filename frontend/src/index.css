@@ -1,4 +1,4 @@
-@import './colors.css';
+@import '@aura-catcher/shared/generator/colors.css';
 
 :root {
   --aura-bg: #f0f9ff;

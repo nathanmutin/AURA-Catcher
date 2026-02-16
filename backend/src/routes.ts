@@ -3,7 +3,7 @@ import { getPool } from './db';
 import multer from 'multer';
 import { processImage } from './imageUtils';
 import { TEMP_DIR } from './config';
-import { Panneau } from './types';
+import type { Panneau } from '@aura-catcher/shared/api/types';
 import fs from 'fs';
 import path from 'path';
 
