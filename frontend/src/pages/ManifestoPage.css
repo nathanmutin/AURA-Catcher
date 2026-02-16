@@ -1,0 +1,179 @@
+.manifesto-page {
+    padding: 2rem;
+    width: 100%;
+    min-height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    background-color: var(--bg-color, #f5f5f5);
+    /* Fallback or variable */
+}
+
+.manifesto-container {
+    max-width: 800px;
+    width: 100%;
+    background: white;
+    padding: 3rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Styles pour le contenu du manifeste (éditable par l'utilisateur) */
+.manifesto-content h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+    color: #2c3e50;
+    text-align: center;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 1rem;
+}
+
+.manifesto-content h2 {
+    font-size: 1.8rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: #34495e;
+}
+
+.manifesto-content p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    color: #444;
+}
+
+.manifesto-content .intro {
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: #555;
+    font-style: italic;
+    margin-bottom: 2rem;
+}
+
+.manifesto-content ul {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+}
+
+.manifesto-content li {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+    color: #444;
+}
+
+.manifesto-content blockquote {
+    border-left: 4px solid #3498db;
+    margin: 2rem 0;
+    padding: 1rem 1.5rem;
+    background-color: #f8f9fa;
+    font-style: italic;
+    font-size: 1.1rem;
+    color: #555;
+}
+
+.manifesto-content img {
+    max-width: 100%;
+    max-height: 300px;
+    height: auto;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.manifesto-content .image-container {
+    margin: 2rem 0;
+    text-align: center;
+}
+
+.manifesto-content .images-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.manifesto-content .images-row .image-container {
+    flex: 1;
+    margin: 0;
+}
+
+/* Make side-by-side images stack on mobile */
+/*@media (max-width: 600px) {
+    .manifesto-content .images-row {
+        flex-direction: column;
+    }
+}*/
+
+.manifesto-content .caption {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: #777;
+    font-style: italic;
+}
+
+/* Style pour le lien source icône */
+.source-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #eee;
+    color: #555;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-decoration: none;
+    vertical-align: text-top;
+    margin-left: 4px;
+    line-height: 1;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.source-link:hover {
+    color: #666;
+}
+
+.sources {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid #eee;
+}
+
+.sources h3 {
+    font-size: 1.2rem;
+    color: #999;
+    margin-bottom: 1rem;
+}
+
+.sources ol {
+    list-style: decimal;
+    padding-left: 1.5rem;
+}
+
+.sources li {
+    margin-bottom: 0.5rem;
+}
+
+.sources a {
+    color: #999;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+}
+
+.sources a:hover {
+    color: #666;
+    text-decoration: underline;
+}
+
+/* Dark mode adjustments (si applicable GLOBALEMENT) */
+@media (prefers-color-scheme: dark) {
+    /* Si l'app gère le dark mode via CSS natif, sinon ajustez selon vos classes */
+    /* .manifesto-page { background-color: #1a1a1a; }
+    .manifesto-container { background-color: #2a2a2a; color: #eee; }
+    .manifesto-content h1, .manifesto-content h2 { color: #fff; }
+    .manifesto-content p, .manifesto-content li { color: #ddd; } */
+}
