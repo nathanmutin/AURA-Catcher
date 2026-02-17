@@ -1,7 +1,8 @@
 import 'dotenv/config';
 import express from 'express';
 import fs from 'fs';
-import routes from './routes';
+import apiCalls from './apiCalls'
+import ogGenerator from './ogGenerator';
 import { initDb } from './db';
 import { PHOTOS_DIR, TEMP_DIR, ORIGINAL_DIR, SMALL_DIR } from './config';
 import path from 'path';
@@ -29,7 +30,8 @@ app.use(express.json());
 // Serve uploads
 app.use('/photos/original', express.static(ORIGINAL_DIR));
 app.use('/photos/small', express.static(SMALL_DIR));
-app.use('/api', routes);
+app.use('/api', apiCalls);
+app.use('/og-image', ogGenerator);
 
 initDb().then(() => {
     app.listen(PORT, () => {

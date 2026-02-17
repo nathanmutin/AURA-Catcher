@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { calculatePanelLayout } from '@aura-catcher/shared/generator/panelLayout';
-import { renderPanelToReact } from '@aura-catcher/shared/generator/panelRenderers';
+import { renderPanelToReact } from '../../utils/panelRenderToReact';
 import './WIPpopup.css';
 
 const WIPpopup: React.FC = () => {

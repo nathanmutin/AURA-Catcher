@@ -7,13 +7,26 @@
         "strict": true,
         "esModuleInterop": true,
         "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true
+        "forceConsistentCasingInFileNames": true,
+        "jsx": "react"
+    },
+    "exports": {
+        "./generator/panelLayout": {
+            "types": "./dist/generator/panelLayout.d.ts",
+            "default": "./dist/generator/panelLayout.js"
+        },
+        "./generator/panelRenderers": {
+            "types": "./dist/generator/panelRenderers.d.ts",
+            "default": "./dist/generator/panelRenderers.js"
+        },
+        "./api/types": {
+            "types": "./dist/api/types.d.ts",
+            "default": "./dist/api/types.js"
+        },
+        "./generator/colors.css": "./generator/colors.css",
+        "./package.json": "./package.json"
     },
     "include": [
-        "./**/*.ts"
-    ],
-    "exclude": [
-        "node_modules",
-        "dist"
+        "./src/**/*"
     ]
 }

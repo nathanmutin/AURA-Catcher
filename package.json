@@ -3,7 +3,7 @@
     "private": true,
     "scripts": {
         "install:all": "npm install && npm install --prefix frontend && npm install --prefix backend",
-        "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\"",
+        "dev": "concurrently \"npm run dev --prefix shared\" \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\"",
         "build": "npm run build --prefix frontend && npm run build --prefix backend",
         "lint": "eslint ."
     },

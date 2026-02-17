@@ -3,12 +3,26 @@ FROM node:alpine AS build
 
 WORKDIR /app
 
-COPY ./frontend ./frontend
-COPY ./backend/src/types.ts ./backend/src/types.ts
+# Copy root package files
+COPY package*.json ./
 
-WORKDIR /app/frontend
+# Copy workspace package files
+COPY backend/package.json ./backend/
+COPY frontend/package.json ./frontend/
+COPY shared/package.json ./shared/
 
+# Install dependencies at root level
 RUN npm install
+
+# Copy source code
+COPY ./frontend ./frontend
+COPY ./shared ./shared
+
+# Build shared workspace
+RUN npm run build --workspace=@aura-catcher/shared
+
+# Build frontend
+WORKDIR /app/frontend
 RUN npm run build
 
 # Stage 2: Serve

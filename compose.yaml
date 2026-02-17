@@ -18,16 +18,18 @@ services:
 
   aura-catcher-backend:
     build:
-      context: ./backend
-      dockerfile: ./Dockerfile
+      # backend needs the full context because it uses shared/
+      context: .
+      dockerfile: ./backend/Dockerfile
     container_name: aura-catcher-backend
     environment:
       DB_HOST: aura-catcher-mariadb # Override 'localhost' 
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
+      DATA_DIR: /app/data
     volumes:
-      - aura-catcher-backend_data:/usr/src/data
+      - aura-catcher-backend_data:/app/data
     depends_on:
       aura-catcher-mariadb:
         condition: service_healthy
@@ -35,7 +37,7 @@ services:
 
   aura-catcher-frontend:
     build:
-      # frontend needs the full context because it uses backend/src/types.ts
+      # frontend needs the full context because it uses shared/
       context: .
       dockerfile: ./frontend/Dockerfile
     container_name: aura-catcher-frontend

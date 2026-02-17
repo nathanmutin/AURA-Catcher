@@ -71,8 +71,12 @@ npm run dev
 To check for code quality issues across the project:
 
 ```bash
+```bash
 npm run lint
 ```
+
+### 6. Open Graph Tags
+Please note that the Open Graph meta tags for the generator (`/generator`) are dynamically injected by Nginx in production using `sub_filter`. In local development (`npm run dev`), these tags will not be substituted, and you will see the placeholder `__OG_IMAGE_URL__`. This is expected behavior.
 
 ## Production Setup (Docker)
 

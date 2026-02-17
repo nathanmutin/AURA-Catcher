@@ -12,21 +12,27 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@aura-catcher/shared": "1.0.0",
+    "@resvg/resvg-js": "^2.6.2",
+    "@resvg/resvg-wasm": "^2.6.2",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "fs-extra": "^11.3.3",
     "mariadb": "^3.4.5",
     "multer": "^2.0.2",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "satori": "^0.19.2",
     "sharp": "^0.34.5",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.9.3",
-    "@aura-catcher/shared": "1.0.0"
+    "typescript": "^5.9.3"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/fs-extra": "^11.0.4",
     "@types/multer": "^2.0.0",
     "@types/node": "^25.0.3",
-    "@types/sharp": "^0.31.1"
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3"
   }
 }

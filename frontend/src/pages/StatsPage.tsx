@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import './StatsPage.css';
-import { fetchGlobalStats, fetchLeaderboard, fetchPanneaux, type Panneau } from '../api/client';
+import { fetchGlobalStats, fetchLeaderboard, fetchPanneaux } from '../api/client';
+import type { Panneau } from '@aura-catcher/shared/api/types';
 
 interface GlobalStats {
     totalPanels: number;

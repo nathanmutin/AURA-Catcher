@@ -1,0 +1,10 @@
+# Docker Build Ignore
+**/node_modules
+**/dist
+**/.env
+.git
+.vscode
+coverage
+test
+*.log
+.DS_Store

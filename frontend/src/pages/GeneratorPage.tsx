@@ -2,8 +2,9 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Download, Link, Check } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { calculatePanelLayout } from '@aura-catcher/shared/generator/panelLayout';
-import { renderPanelToReact, renderPanelToString } from '@aura-catcher/shared/generator/panelRenderers';
+import { renderPanelToString } from '@aura-catcher/shared/generator/panelRenderers';
 import './GeneratorPage.css';
+import { renderPanelToReact } from '../utils/panelRenderToReact';
 
 const GeneratorPage: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
