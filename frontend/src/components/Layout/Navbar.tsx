@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Map, SquarePen, BarChart, BookOpen } from 'lucide-react';
+import { Map, SquarePen, BarChart, CircleQuestionMark } from 'lucide-react';
 import './Navbar.css';
 
 import iconSvg from '../../assets/icon.svg';
@@ -28,9 +28,9 @@ const Navbar: React.FC = () => {
                     <BarChart size={24} />
                     <span>Stats</span>
                 </NavLink>
-                <NavLink to="/manifesto" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-                    <BookOpen size={24} />
-                    <span>Manifeste</span>
+                <NavLink to="/faq" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                    <CircleQuestionMark size={24} />
+                    <span>FAQ</span>
                 </NavLink>
             </nav>
 
@@ -51,8 +51,8 @@ const Navbar: React.FC = () => {
                     <NavLink to="/stats" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                         Stats
                     </NavLink>
-                    <NavLink to="/manifeste" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                        Manifeste
+                    <NavLink to="/faq" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                        FAQ
                     </NavLink>
                 </div>
             </nav>
