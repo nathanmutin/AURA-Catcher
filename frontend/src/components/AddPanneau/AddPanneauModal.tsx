@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import heic2any from 'heic2any';
 import { Camera, MapPin, X } from 'lucide-react';
 import { getGPSFromImage } from '../../utils/geo';
 import { createPanneau } from '../../api/client';
@@ -48,6 +47,10 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
             if (originalFile.type === 'image/heic' || originalFile.type === 'image/heif' || originalFile.name.toLowerCase().endsWith('.heic')) {
                 setIsConverting(true);
                 try {
+                    // La librairie heic2any est importée dynamiquement pour éviter de la charger au démarrage
+                    // car elle est super mega lourde (1.35MB comparée à 500KB pour le reste du code)
+                    const heic2anyModule = await import('heic2any');
+                    const heic2any = heic2anyModule.default;
                     const convertedBlob = await heic2any({
                         blob: originalFile,
                         toType: 'image/jpeg',
