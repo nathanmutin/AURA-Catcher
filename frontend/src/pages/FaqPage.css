@@ -92,12 +92,31 @@
     margin: 0;
 }
 
+/* Responsive adjustments to prevent horizontal squishing on smaller screens */
+@media (max-width: 768px) {
+    .faq-page {
+        padding: 1rem;
+    }
+    
+    .faq-container {
+        padding: 1.5rem;
+    }
+
+    .faq-content h1 {
+        font-size: 2rem;
+    }
+
+    .faq-content h2 {
+        font-size: 1.5rem;
+    }
+}
+
 /* Make side-by-side images stack on mobile */
-/*@media (max-width: 600px) {
+@media (max-width: 600px) {
     .faq-content .images-row {
         flex-direction: column;
     }
-}*/
+}
 
 .faq-content .caption {
     display: block;
