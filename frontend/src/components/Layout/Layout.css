@@ -9,6 +9,7 @@
     position: relative;
     overflow-y: auto;
     overflow-x: hidden;
+    scroll-behavior: smooth;
     /* Default for desktop/map: no extra padding */
 }
 
@@ -23,6 +24,8 @@
 @media (min-width: 768px) {
     .layout-main {
         padding-top: 64px;
+        scroll-padding-top: 80px;
+        /* Offset for desktop nav + breathing room */
         /* Desktop Nav Height */
     }
 }

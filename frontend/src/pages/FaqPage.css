@@ -40,6 +40,7 @@
     line-height: 1.6;
     margin-bottom: 1rem;
     color: #444;
+    text-align: justify;
 }
 
 .faq-content ul {
@@ -52,6 +53,7 @@
     line-height: 1.6;
     margin-bottom: 0.5rem;
     color: #444;
+    text-align: justify;
 }
 
 .faq-content blockquote {
@@ -113,8 +115,9 @@
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background-color: #eee;
-    color: #555;
+    background-color: transparent;
+    border: 1px solid var(--aura-blue);
+    color: var(--aura-blue);
     font-size: 0.75rem;
     font-weight: bold;
     text-decoration: none;
@@ -125,19 +128,46 @@
 }
 
 .source-link:hover {
-    color: #666;
+    background-color: var(--aura-blue);
+    color: white;
 }
 
+/* Style pour les appels de note de bas de page */
+.note-link {
+    vertical-align: super;
+    font-size: 0.75rem;
+    color: var(--aura-blue);
+    text-decoration: none;
+    margin-left: 2px;
+}
+
+.note-link:hover {
+    text-decoration: underline;
+}
+
+.footnotes,
 .sources {
     margin-top: 4rem;
     padding-top: 2rem;
     border-top: 1px solid #eee;
 }
 
+.footnotes h3,
 .sources h3 {
     font-size: 1.2rem;
     color: #999;
     margin-bottom: 1rem;
+}
+
+.footnotes ol {
+    list-style: decimal;
+    padding-left: 1.5rem;
+    font-size: 0.95rem;
+    color: #777;
+}
+
+.footnotes li {
+    margin-bottom: 0.5rem;
 }
 
 .sources ol {
