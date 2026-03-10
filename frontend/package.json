@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build"
   },
   "dependencies": {
+    "@icons-pack/react-simple-icons": "^13.12.0",
     "exifr": "^7.1.3",
     "heic2any": "^0.0.4",
     "leaflet": "^1.9.4",
