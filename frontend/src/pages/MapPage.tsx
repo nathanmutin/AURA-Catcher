@@ -2,8 +2,8 @@ import { useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import type { Panneau } from '../../../backend/src/types.ts';
-import { fetchPanneaux } from '../api/client';
+import type { Panneau, PanelType } from '../../../backend/src/types';
+import { fetchPanneaux, fetchTypes } from '../api/client';
 import L from 'leaflet';
 import { LocateControl } from "leaflet.locatecontrol";
 import "leaflet.locatecontrol/dist/L.Control.Locate.min.css";
@@ -131,6 +131,9 @@ const MapPage: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isPickingLocation, setIsPickingLocation] = useState(false);
     const [pickedLocation, setPickedLocation] = useState<{ lat: number; lng: number } | null>(null);
+    const [types, setTypes] = useState<PanelType[]>([]);
+    const [selectedTypeIds, setSelectedTypeIds] = useState<number[]>([]);
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
 
 
 
@@ -143,7 +146,17 @@ const MapPage: React.FC = () => {
                 console.error('Failed to load panneaux:', error);
             }
         };
+        const loadTypes = async () => {
+            try {
+                const data = await fetchTypes();
+                setTypes(data);
+                setSelectedTypeIds(data.map(t => t.id)); // select all by default
+            } catch (error) {
+                 console.error('Failed to load types:', error);
+            }
+        };
         loadPanneaux();
+        loadTypes();
     }, []);
 
     const handleMapClick = (latlng: L.LatLng) => {
@@ -163,8 +176,67 @@ const MapPage: React.FC = () => {
         // Could add toast here
     };
 
+    const toggleType = (id: number) => {
+        setSelectedTypeIds(prev => 
+            prev.includes(id) 
+                ? prev.filter(tId => tId !== id)
+                : [...prev, id]
+        );
+    };
+
+    const toggleAllTypes = () => {
+        if (selectedTypeIds.length === types.length) {
+            setSelectedTypeIds([]); // deselect all
+        } else {
+            setSelectedTypeIds(types.map(t => t.id)); // select all
+        }
+    };
+
+    const filteredPanneaux = panneaux.filter(p => selectedTypeIds.includes(p.typeId || 7)); // Defaulting missing typeId to Autre (7) if any
+
     return (
         <div className="map-page">
+            <div className="map-filter-container">
+                <button 
+                    className="filter-toggle-btn"
+                    onClick={() => setIsFilterOpen(!isFilterOpen)}
+                >
+                    Filtres ({selectedTypeIds.length === types.length ? 'Tous' : selectedTypeIds.length})
+                </button>
+
+                {isFilterOpen && (
+                    <div className="filter-dropdown">
+                        <div 
+                            className="filter-dropdown-item select-all-item"
+                            onClick={toggleAllTypes}
+                        >
+                            <input 
+                                type="checkbox" 
+                                checked={selectedTypeIds.length === types.length} 
+                                readOnly 
+                            />
+                            <strong>Tout sélectionner</strong>
+                        </div>
+                        {types.map(t => {
+                            const isActive = selectedTypeIds.includes(t.id);
+                            return (
+                                <div 
+                                    key={t.id} 
+                                    className="filter-dropdown-item"
+                                    onClick={() => toggleType(t.id)}
+                                >
+                                    <input 
+                                        type="checkbox" 
+                                        checked={isActive} 
+                                        readOnly 
+                                    />
+                                    <span>{t.name}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
             <MapContainer
                 center={[45.75, 4.85]}
                 zoom={7}
@@ -175,7 +247,7 @@ const MapPage: React.FC = () => {
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
 
-                {panneaux.map((panneau) => (
+                {filteredPanneaux.map((panneau) => (
                     <PanneauMarker key={panneau.id} panneau={panneau} />
                 ))}
 

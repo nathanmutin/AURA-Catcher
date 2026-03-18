@@ -1,4 +1,4 @@
-import type { Panneau } from '../../../backend/src/types.ts';
+import type { Panneau, PanelType } from '../../../backend/src/types.ts';
 
 const BASE_URL = import.meta.env.VITE_API_URL || '';
 
@@ -33,6 +33,14 @@ export const fetchLeaderboard = async (): Promise<Array<{ username: string; coun
     const response = await fetch(`${BASE_URL}/api/stats/leaderboard`);
     if (!response.ok) {
         throw new Error('Failed to fetch leaderboard');
+    }
+    return response.json();
+};
+
+export const fetchTypes = async (): Promise<PanelType[]> => {
+    const response = await fetch(`${BASE_URL}/api/types`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch types');
     }
     return response.json();
 };

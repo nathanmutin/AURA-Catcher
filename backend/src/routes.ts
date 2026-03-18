@@ -43,7 +43,7 @@ router.get('/panneaux', async (req, res) => {
         conn = await getPool().getConnection();
         const rows = await conn.query(`
             SELECT 
-                p.id, p.lat, p.lng, p.comment, p.createdAt,
+                p.id, p.lat, p.lng, p.comment, p.createdAt, p.type_id,
                 i.fileNameSmall,
                 u.username
             FROM panneaux p
@@ -60,6 +60,7 @@ router.get('/panneaux', async (req, res) => {
             createdAt: Date;
             fileNameSmall: string | null;
             username: string | null;
+            type_id: number | null;
         }
 
         const panneaux: Panneau[] = rows.map((row: Row) => ({
@@ -69,7 +70,8 @@ router.get('/panneaux', async (req, res) => {
             comment: row.comment || undefined,
             createdAt: row.createdAt.toISOString(),
             author: row.username || undefined,
-            imageUrl: row.fileNameSmall ? `/photos/small/${row.fileNameSmall}` : ''
+            imageUrl: row.fileNameSmall ? `/photos/small/${row.fileNameSmall}` : '',
+            typeId: row.type_id || undefined,
         }));
 
         res.json(panneaux);
@@ -97,7 +99,7 @@ router.get('/panneaux', async (req, res) => {
 router.post('/panneaux', upload.single('image'), async (req, res) => {
     let conn;
     try {
-        const { lat, lng, comment, author } = req.body;
+        const { lat, lng, comment, author, typeId } = req.body;
         const file = req.file;
 
         if (!file || !lat || !lng) {
@@ -129,8 +131,8 @@ router.post('/panneaux', upload.single('image'), async (req, res) => {
         }
 
         // 2. Insert panneau
-        const panneauRes = await conn.query('INSERT INTO panneaux (lat, lng, comment, author_id) VALUES (?, ?, ?, ?)',
-            [lat, lng, comment, authorId]);
+        const panneauRes = await conn.query('INSERT INTO panneaux (lat, lng, comment, author_id, type_id) VALUES (?, ?, ?, ?, ?)',
+            [lat, lng, comment, authorId, typeId || 1]);
         const panneauId = panneauRes.insertId;
 
         // 3. Insert image (one row with both versions)
@@ -146,7 +148,7 @@ router.post('/panneaux', upload.single('image'), async (req, res) => {
         // Log the action
         logAction(`[NEW PANEL] ID: ${panneauId}, Lat: ${lat}, Lng: ${lng}, Author: ${author || 'Anonymous'}, Image: ${fileNameOriginal}, IP: ${req.ip || 'unknown'}`);
 
-        res.status(201).json({ id: parseInt(panneauId.toString()), lat, lng, imageUrl, comment, author: author || null });
+        res.status(201).json({ id: parseInt(panneauId.toString()), lat, lng, imageUrl, comment, author: author || null, typeId: typeId || 1 });
 
     } catch (error) {
         if (conn) await conn.rollback();
@@ -184,7 +186,7 @@ router.get('/stats/global', async (req, res) => {
 
 /**
  * GET /api/stats/leaderboard
- * Retrieves the leaderboard of contributors.
+ * Retrieves the leaderboard of contributors based on points.
  */
 router.get('/stats/leaderboard', async (req, res) => {
     let conn;
@@ -193,9 +195,10 @@ router.get('/stats/leaderboard', async (req, res) => {
         const rows = await conn.query(`
             SELECT 
                 u.username,
-                COUNT(p.id) as count
+                SUM(t.points) as count
             FROM panneaux p
             JOIN users u ON p.author_id = u.id
+            LEFT JOIN panel_types t ON p.type_id = t.id
             GROUP BY u.id
             ORDER BY count DESC
             LIMIT 10
@@ -203,11 +206,29 @@ router.get('/stats/leaderboard', async (req, res) => {
 
         res.json(rows.map((row: any) => ({
             username: row.username,
-            count: Number(row.count)
+            count: Number(row.count || 0)
         })));
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to fetch leaderboard' });
+    } finally {
+        if (conn) conn.release();
+    }
+});
+
+/**
+ * GET /api/types
+ * Retrieves a list of all panel types.
+ */
+router.get('/types', async (req, res) => {
+    let conn;
+    try {
+        conn = await getPool().getConnection();
+        const rows = await conn.query('SELECT * FROM panel_types ORDER BY points DESC');
+        res.json(rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch types' });
     } finally {
         if (conn) conn.release();
     }

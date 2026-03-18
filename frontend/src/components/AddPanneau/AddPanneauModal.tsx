@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Camera, MapPin, X } from 'lucide-react';
 import { getGPSFromImage } from '../../utils/geo';
-import { createPanneau } from '../../api/client';
+import { createPanneau, fetchTypes } from '../../api/client';
+import type { PanelType } from '../../../../backend/src/types';
 import './AddPanneauModal.css';
 
 interface Props {
@@ -20,6 +21,8 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
     const [isConverting, setIsConverting] = useState(false);
     const [comment, setComment] = useState('');
     const [author, setAuthor] = useState('');
+    const [types, setTypes] = useState<PanelType[]>([]);
+    const [typeId, setTypeId] = useState<number | ''>('');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -29,6 +32,12 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
             if (savedAuthor) {
                 setAuthor(savedAuthor);
             }
+            fetchTypes().then(data => {
+                setTypes(data);
+                if (data.length > 0 && typeId === '') {
+                    setTypeId(data[0].id);
+                }
+            }).catch(console.error);
         }
     }, [isOpen]);
 
@@ -97,6 +106,9 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
         if (author) {
             formData.append('author', author);
             localStorage.setItem('lastAuthor', author);
+        }
+        if (typeId) {
+            formData.append('typeId', typeId.toString());
         }
 
         try {
@@ -188,6 +200,19 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
                             onChange={e => setAuthor(e.target.value)}
                             placeholder="Votre pseudo"
                         />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Type de panneau</label>
+                        <select
+                            value={typeId}
+                            onChange={e => setTypeId(Number(e.target.value))}
+                            required
+                        >
+                            {types.map(t => (
+                                <option key={t.id} value={t.id}>{t.name} ({t.points} pts)</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className="form-group">

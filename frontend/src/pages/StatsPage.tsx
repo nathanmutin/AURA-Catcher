@@ -66,7 +66,7 @@ const StatsPage: React.FC = () => {
                             <tr>
                                 <th style={{ width: '80px' }}>Position</th>
                                 <th>Contributeur</th>
-                                <th>Panneaux ajoutés</th>
+                                <th>Score</th>
                             </tr>
                         </thead>
                         <tbody>
