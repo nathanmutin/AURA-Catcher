@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { getPool } from './db';
 import multer from 'multer';
 import { processImage } from './imageUtils';
-import { TEMP_DIR } from './config';
+import { TEMP_DIR, LOGS_DIR } from './config';
 import { Panneau } from './types';
 import fs from 'fs';
 import path from 'path';
@@ -25,7 +25,7 @@ async function logAction(message: string) {
     const logMessage = `[${timestamp}] ${message}`;
     console.log(logMessage);
     try {
-        await fs.promises.appendFile(path.join(__dirname, '../logs/activity.log'), logMessage + '\n');
+        await fs.promises.appendFile(path.join(LOGS_DIR, 'activity.log'), logMessage + '\n');
     } catch (err) {
         console.error('Failed to write to log file:', err);
     }
