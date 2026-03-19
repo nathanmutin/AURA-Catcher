@@ -17,6 +17,7 @@ services:
     restart: always
 
   aura-catcher-backend:
+    user: 1000:1000
     build:
       context: ./backend
       dockerfile: ./Dockerfile
@@ -27,7 +28,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
     volumes:
-      - aura-catcher-backend_data:/usr/src/data
+      - ./data:/usr/src/data
     depends_on:
       aura-catcher-mariadb:
         condition: service_healthy
@@ -47,4 +48,3 @@ services:
 
 volumes:
   aura-catcher-mariadb_data:
-  aura-catcher-backend_data:

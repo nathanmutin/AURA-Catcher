@@ -3,7 +3,7 @@ import express from 'express';
 import fs from 'fs';
 import routes from './routes';
 import { initDb } from './db';
-import { PHOTOS_DIR, TEMP_DIR, ORIGINAL_DIR, SMALL_DIR } from './config';
+import { DATA_DIR, LOGS_DIR, PHOTOS_DIR, TEMP_DIR, ORIGINAL_DIR, SMALL_DIR } from './config';
 import path from 'path';
 
 /**
@@ -14,7 +14,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Ensure directories exist
-const dirs = [PHOTOS_DIR, TEMP_DIR, path.join(__dirname, '../logs')];
+const dirs = [PHOTOS_DIR, TEMP_DIR, LOGS_DIR];
 dirs.forEach(dir => {
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
