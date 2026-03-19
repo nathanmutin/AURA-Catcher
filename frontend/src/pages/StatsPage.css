@@ -168,3 +168,12 @@
 }
 
 /* Bronze */
+
+.clickable-row.data-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.clickable-row.data-row:hover {
+  background-color: var(--aura-light-blue, #e2e8f0);
+}
