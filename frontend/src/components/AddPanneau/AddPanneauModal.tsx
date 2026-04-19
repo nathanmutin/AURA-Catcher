@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Camera, MapPin, X } from 'lucide-react';
 import { getGPSFromImage } from '../../utils/geo';
 import { createPanneau, fetchTypes } from '../../api/client';
@@ -17,14 +18,15 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-    const [loading, setLoading] = useState(false);
     const [isConverting, setIsConverting] = useState(false);
     const [comment, setComment] = useState('');
     const [author, setAuthor] = useState('');
-    const [types, setTypes] = useState<PanelType[]>([]);
     const [typeId, setTypeId] = useState<number | ''>('');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const queryClient = useQueryClient();
+
+    const { data: types = [] } = useQuery({ queryKey: ['types'], queryFn: fetchTypes, enabled: isOpen });
 
     useEffect(() => {
         if (isOpen) {
@@ -32,14 +34,14 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
             if (savedAuthor) {
                 setAuthor(savedAuthor);
             }
-            fetchTypes().then(data => {
-                setTypes(data);
-                if (data.length > 0 && typeId === '') {
-                    setTypeId(data[0].id);
-                }
-            }).catch(console.error);
         }
     }, [isOpen]);
+
+    useEffect(() => {
+        if (types.length > 0 && typeId === '') {
+            setTypeId(types[0].id);
+        }
+    }, [types, typeId]);
 
     useEffect(() => {
         if (pickedLocation) {
@@ -93,11 +95,25 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
         }
     };
 
+    const createPanneauMutation = useMutation({
+        mutationFn: (formData: FormData) => createPanneau(formData),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['panneaux'] });
+            queryClient.invalidateQueries({ queryKey: ['stats'] });
+            queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+            onSuccess();
+            handleClose();
+        },
+        onError: (err) => {
+            console.error(err);
+            alert('Erreur lors de l\'envoi');
+        }
+    });
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!file || !location) return;
 
-        setLoading(true);
         const formData = new FormData();
         formData.append('image', file);
         formData.append('lat', location.lat.toString());
@@ -111,16 +127,7 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
             formData.append('typeId', typeId.toString());
         }
 
-        try {
-            await createPanneau(formData);
-            onSuccess();
-            handleClose();
-        } catch (err) {
-            console.error(err);
-            alert('Erreur lors de l\'envoi');
-        } finally {
-            setLoading(false);
-        }
+        createPanneauMutation.mutate(formData);
     };
 
     const handleClose = () => {
@@ -228,9 +235,9 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
                     <button
                         type="submit"
                         className="btn-primary w-full"
-                        disabled={!file || !location || loading}
+                        disabled={!file || !location || createPanneauMutation.isPending}
                     >
-                        {loading ? 'Envoi...' : 'Envoyer'}
+                        {createPanneauMutation.isPending ? 'Envoi...' : 'Envoyer'}
                     </button>
                 </form>
             </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -165,37 +166,23 @@ const PanneauMarker: React.FC<{ panneau: Panneau, typeName: string }> = ({ panne
 };
 
 const MapPage: React.FC = () => {
-    const [panneaux, setPanneaux] = useState<Panneau[]>([]);
+    const { data: panneaux = [] } = useQuery({ queryKey: ['panneaux'], queryFn: fetchPanneaux });
+    const { data: types = [] } = useQuery({ queryKey: ['types'], queryFn: fetchTypes });
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isPickingLocation, setIsPickingLocation] = useState(false);
     const [pickedLocation, setPickedLocation] = useState<{ lat: number; lng: number } | null>(null);
-    const [types, setTypes] = useState<PanelType[]>([]);
     const [selectedTypeIds, setSelectedTypeIds] = useState<number[]>([]);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-
+    const [hasInitializedFilter, setHasInitializedFilter] = useState(false);
 
     useEffect(() => {
-        const loadPanneaux = async () => {
-            try {
-                const data = await fetchPanneaux();
-                setPanneaux(data);
-            } catch (error) {
-                console.error('Failed to load panneaux:', error);
-            }
-        };
-        const loadTypes = async () => {
-            try {
-                const data = await fetchTypes();
-                setTypes(data);
-                setSelectedTypeIds(data.map(t => t.id)); // select all by default
-            } catch (error) {
-                console.error('Failed to load types:', error);
-            }
-        };
-        loadPanneaux();
-        loadTypes();
-    }, []);
+        if (types.length > 0 && !hasInitializedFilter) {
+            setSelectedTypeIds(types.map(t => t.id));
+            setHasInitializedFilter(true);
+        }
+    }, [types, hasInitializedFilter]);
 
     const handleMapClick = (latlng: L.LatLng) => {
         setPickedLocation({ lat: latlng.lat, lng: latlng.lng });
@@ -209,8 +196,7 @@ const MapPage: React.FC = () => {
     };
 
     const handleSuccess = () => {
-        // Reload locally for now
-        fetchPanneaux().then(setPanneaux).catch(console.error);
+        // La mise à jour se fait via React Query dans AddPanneauModal
         // Could add toast here
     };
 

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import './StatsPage.css';
 import { fetchGlobalStats, fetchLeaderboard, fetchPanneaux, fetchTypes } from '../api/client';
 import type { Panneau, PanelType } from '../../../backend/src/types';
@@ -15,40 +16,26 @@ interface LeaderboardEntry {
     totalPanels: number;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 const StatsPage: React.FC = () => {
     const navigate = useNavigate();
-    const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
-    const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-    const [panneaux, setPanneaux] = useState<Panneau[]>([]);
-    const [types, setTypes] = useState<PanelType[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
 
-    useEffect(() => {
-        const loadData = async () => {
-            try {
-                const [stats, leaders, panels, panelsTypes] = await Promise.all([
-                    fetchGlobalStats(),
-                    fetchLeaderboard(),
-                    fetchPanneaux(),
-                    fetchTypes()
-                ]);
-                setGlobalStats(stats);
-                setLeaderboard(leaders);
-                setPanneaux(panels);
-                setTypes(panelsTypes);
-            } catch (error) {
-                console.error('Erreur de chargement des données:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const { data: globalStats, isLoading: isLoadingStats } = useQuery({ queryKey: ['stats'], queryFn: fetchGlobalStats });
+    const { data: leaderboard = [], isLoading: isLoadingLeaderboard } = useQuery({ queryKey: ['leaderboard'], queryFn: fetchLeaderboard });
+    const { data: panneaux = [], isLoading: isLoadingPanneaux } = useQuery({ queryKey: ['panneaux'], queryFn: fetchPanneaux });
+    const { data: types = [], isLoading: isLoadingTypes } = useQuery({ queryKey: ['types'], queryFn: fetchTypes });
 
-        loadData();
-    }, []);
+    const loading = isLoadingStats || isLoadingLeaderboard || isLoadingPanneaux || isLoadingTypes;
 
     if (loading) {
         return <div className="stats-container">Chargement...</div>;
     }
+
+    const totalPages = Math.max(1, Math.ceil(panneaux.length / ITEMS_PER_PAGE));
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const currentPanneaux = panneaux.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
     return (
         <div className="stats-container">
@@ -64,7 +51,7 @@ const StatsPage: React.FC = () => {
             </div>
 
             <div className="stats-section">
-                <div className="section-title">Top Contributeurs</div>
+                <div className="section-title">Top 10 des Contributeurs</div>
                 <div className="table-container">
                     <table className="data-table">
                         <thead>
@@ -107,12 +94,12 @@ const StatsPage: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {panneaux.map((p) => {
+                            {currentPanneaux.map((p) => {
                                 const date = new Date(p.createdAt).toLocaleDateString();
                                 const typeName = types.find(t => t.id === p.typeId)?.name || 'Inconnu';
                                 return (
-                                    <tr 
-                                        key={p.id} 
+                                    <tr
+                                        key={p.id}
                                         className="clickable-row data-row"
                                         onClick={() => navigate(`/?panneauId=${p.id}`)}
                                         title="Cliquez pour voir sur la carte"
@@ -132,6 +119,26 @@ const StatsPage: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
+
+                {totalPages > 1 && (
+                    <div className="pagination-controls">
+                        <button
+                            className="btn-pagination"
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        >
+                            Précédent
+                        </button>
+                        <span className="pagination-info">Page {currentPage} sur {totalPages}</span>
+                        <button
+                            className="btn-pagination"
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        >
+                            Suivant
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
