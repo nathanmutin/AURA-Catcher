@@ -41,7 +41,7 @@ services:
       dockerfile: ./frontend/Dockerfile
     container_name: aura-catcher-frontend
     ports:
-      - "8080:8080"
+      - "4657:4657"
     depends_on:
       - aura-catcher-backend
     restart: always

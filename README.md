@@ -95,7 +95,7 @@ To deploy the entire stack (Frontend, Backend, and MariaDB) using Docker:
     ```
 
 2.  **Access the Application**:
-    -   **Frontend**: [http://localhost:8080](http://localhost:8080)
+    -   **Frontend**: [http://localhost:4657](http://localhost:4657)
     -   **Backend**: Not directly exposed (accessible internally by the frontend via Nginx).
 
 ### Data Management

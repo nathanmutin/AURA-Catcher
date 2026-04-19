@@ -47,7 +47,8 @@ export const initDb = async () => {
         ('Pub/Bache', 2),
         ('Borne TER', 1),
         ('Borne Oura', 1),
-        ('Montagne', 1)
+        ('Montagne', 1),
+        ('Arrêt de bus', 1)
       `);
     }
 
@@ -65,19 +66,6 @@ export const initDb = async () => {
         FOREIGN KEY (type_id) REFERENCES panel_types(id)
       )
     `);
-
-    // Ensure type_id exists for older DBs
-    try {
-      await conn.query('ALTER TABLE panneaux ADD COLUMN type_id INT');
-      await conn.query('ALTER TABLE panneaux ADD CONSTRAINT fk_type FOREIGN KEY (type_id) REFERENCES panel_types(id)');
-      // Update existing rows to default 'Autre'
-      await conn.query('UPDATE panneaux SET type_id = 1 WHERE type_id IS NULL');
-    } catch (e: any) {
-      // ER_DUP_FIELDNAME (1060) is expected if column already exists
-      if (e.code !== 'ER_DUP_FIELDNAME') {
-        console.error('Migration error for type_id:', e);
-      }
-    }
 
     // Create images table
     await conn.query(`

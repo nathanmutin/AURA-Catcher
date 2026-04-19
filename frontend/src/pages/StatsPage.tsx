@@ -102,7 +102,7 @@ const StatsPage: React.FC = () => {
                                         key={p.id}
                                         className="clickable-row data-row"
                                         onClick={() => navigate(`/?panneauId=${p.id}`)}
-                                        title="Cliquez pour voir sur la carte"
+                                        title={`Panneau n°${p.id} - Cliquez pour voir sur la carte`}
                                     >
                                         <td>
                                             {p.imageUrl && (
