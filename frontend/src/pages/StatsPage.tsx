@@ -3,18 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import './StatsPage.css';
 import { fetchGlobalStats, fetchLeaderboard, fetchPanneaux, fetchTypes } from '../api/client';
-import type { Panneau, PanelType } from '../../../backend/src/types';
 
-interface GlobalStats {
-    totalPanels: number;
-    totalContributors: number;
-}
-
-interface LeaderboardEntry {
-    username: string;
-    count: number;
-    totalPanels: number;
-}
 
 const ITEMS_PER_PAGE = 10;
 

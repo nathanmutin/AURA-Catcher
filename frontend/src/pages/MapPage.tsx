@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import type { Panneau, PanelType } from '../../../backend/src/types';
+import type { Panneau } from '../../../backend/src/types';
 import { fetchPanneaux, fetchTypes } from '../api/client';
 import L from 'leaflet';
 import { LocateControl } from "leaflet.locatecontrol";

@@ -3,7 +3,6 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Camera, MapPin, X } from 'lucide-react';
 import { getGPSFromImage } from '../../utils/geo';
 import { createPanneau, fetchTypes } from '../../api/client';
-import type { PanelType } from '../../../../backend/src/types';
 import './AddPanneauModal.css';
 
 interface Props {
