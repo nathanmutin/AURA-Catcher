@@ -12,6 +12,7 @@ interface GlobalStats {
 interface LeaderboardEntry {
     username: string;
     count: number;
+    totalPanels: number;
 }
 
 const StatsPage: React.FC = () => {
@@ -71,6 +72,7 @@ const StatsPage: React.FC = () => {
                                 <th style={{ width: '80px' }}>Position</th>
                                 <th>Contributeur</th>
                                 <th>Score</th>
+                                <th>Nb. Panneaux</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -83,6 +85,7 @@ const StatsPage: React.FC = () => {
                                     </td>
                                     <td>{entry.username}</td>
                                     <td>{entry.count}</td>
+                                    <td>{entry.totalPanels}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -111,7 +114,7 @@ const StatsPage: React.FC = () => {
                                     <tr 
                                         key={p.id} 
                                         className="clickable-row data-row"
-                                        onClick={() => navigate(`/?lat=${p.lat}&lng=${p.lng}&zoom=15&panneauId=${p.id}`)}
+                                        onClick={() => navigate(`/?panneauId=${p.id}`)}
                                         title="Cliquez pour voir sur la carte"
                                     >
                                         <td>

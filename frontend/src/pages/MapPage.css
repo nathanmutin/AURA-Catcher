@@ -11,18 +11,122 @@
 }
 
 .popup-content {
-    text-align: center;
-    min-width: 200px;
-    max-width: 300px;
-    /* Increased */
+    text-align: left;
+    min-width: 220px;
+    max-width: 280px;
+    font-family: var(--font-family, 'Inter', sans-serif);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.popup-img-wrapper {
+    position: relative;
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .popup-img {
     width: 100%;
-    max-height: 300px;
-    border-radius: 8px;
-    margin-bottom: 0.5rem;
+    max-height: 200px;
     object-fit: cover;
+    display: block;
+    margin: 0;
+}
+
+.popup-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: var(--aura-blue, #0056b3);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    backdrop-filter: blur(4px);
+}
+
+.popup-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.popup-comment {
+    font-size: 0.95rem;
+    color: #333;
+    line-height: 1.4;
+    margin: 0;
+    font-style: italic;
+}
+
+.empty-comment {
+    color: #888;
+    font-style: normal;
+    font-size: 0.85rem;
+}
+
+.popup-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px solid #eee;
+}
+
+.popup-author-date {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.popup-author, .popup-date {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.popup-share-btn {
+    background: none;
+    border: none;
+    color: var(--aura-blue, #0056b3);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.popup-share-btn:hover {
+    background-color: rgba(0, 86, 179, 0.1);
+}
+
+.popup-share-btn:active {
+    transform: scale(0.9);
+}
+
+.popup-icon {
+    color: var(--aura-blue, #0056b3);
+}
+
+/* Override default leaflet popup styling slightly for cleaner look */
+.custom-popup .leaflet-popup-content-wrapper {
+    border-radius: 12px;
+    padding: 4px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.custom-popup .leaflet-popup-content {
+    margin: 12px;
 }
 
 .fab-add {

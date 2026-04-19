@@ -1,5 +1,6 @@
 import React from 'react';
 import { SiGithub } from '@icons-pack/react-simple-icons';
+import { Mail } from 'lucide-react';
 /* @ts-ignore */
 import supervilleImage from '../assets/superville.webp';
 import appart1Image from '../assets/radio.webp';
@@ -14,6 +15,17 @@ const FaqPage: React.FC = () => {
             <div className="faq-container">
                 <div className="faq-content">
                     <h1>À propos d'AURA Catcher</h1>
+
+                    <h2>Nous contacter</h2>
+                    <p style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                        Pour toute question, suggestion ou signalement, n'hésitez pas à nous envoyer un message :
+                    </p>
+                    <div style={{ textAlign: 'center', margin: '1rem 0 2.5rem 0' }}>
+                        <a href="mailto:contact@aura.nitum.fr" className="contact-button">
+                            <Mail size={24} style={{ marginRight: '10px' }} />
+                            contact@aura.nitum.fr
+                        </a>
+                    </div>
 
                     <h2>Qu'est-ce que AURA Catcher ?</h2>
                     <p>

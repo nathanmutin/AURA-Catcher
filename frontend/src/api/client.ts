@@ -29,7 +29,7 @@ export const fetchGlobalStats = async (): Promise<{ totalPanels: number; totalCo
     return response.json();
 };
 
-export const fetchLeaderboard = async (): Promise<Array<{ username: string; count: number }>> => {
+export const fetchLeaderboard = async (): Promise<Array<{ username: string; count: number; totalPanels: number }>> => {
     const response = await fetch(`${BASE_URL}/api/stats/leaderboard`);
     if (!response.ok) {
         throw new Error('Failed to fetch leaderboard');

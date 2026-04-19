@@ -195,7 +195,8 @@ router.get('/stats/leaderboard', async (req, res) => {
         const rows = await conn.query(`
             SELECT 
                 u.username,
-                SUM(t.points) as count
+                SUM(t.points) as count,
+                COUNT(p.id) as total_panels
             FROM panneaux p
             JOIN users u ON p.author_id = u.id
             LEFT JOIN panel_types t ON p.type_id = t.id
@@ -206,7 +207,8 @@ router.get('/stats/leaderboard', async (req, res) => {
 
         res.json(rows.map((row: any) => ({
             username: row.username,
-            count: Number(row.count || 0)
+            count: Number(row.count || 0),
+            totalPanels: Number(row.total_panels || 0)
         })));
     } catch (error) {
         console.error(error);

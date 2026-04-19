@@ -7,7 +7,7 @@ import { fetchPanneaux, fetchTypes } from '../api/client';
 import L from 'leaflet';
 import { LocateControl } from "leaflet.locatecontrol";
 import "leaflet.locatecontrol/dist/L.Control.Locate.min.css";
-import { Plus } from 'lucide-react';
+import { Plus, User, Calendar, Share2, Check } from 'lucide-react';
 import AddPanneauModal from '../components/AddPanneau/AddPanneauModal.tsx';
 import './MapPage.css';
 
@@ -59,33 +59,48 @@ const LocationControl = () => {
     return null;
 };
 
-const MapUrlHandler = () => {
+const MapUrlHandler: React.FC<{ panneaux: Panneau[] }> = ({ panneaux }) => {
     const map = useMap();
     const [searchParams] = useSearchParams();
 
     useEffect(() => {
-        const lat = searchParams.get('lat');
-        const lng = searchParams.get('lng');
-        const zoom = searchParams.get('zoom');
+        const panneauId = searchParams.get('panneauId');
 
-        if (lat && lng) {
-            const latitude = parseFloat(lat);
-            const longitude = parseFloat(lng);
-            const zoomLevel = zoom ? parseInt(zoom) : 15;
-
-            if (!isNaN(latitude) && !isNaN(longitude)) {
-                map.setView([latitude, longitude], zoomLevel);
+        if (panneauId && panneaux.length > 0) {
+            const panneau = panneaux.find(p => p.id === Number(panneauId));
+            if (panneau) {
+                map.setView([panneau.lat, panneau.lng], 15);
+                return;
             }
         }
-    }, [searchParams, map]);
+    }, [searchParams, map, panneaux]);
 
     return null;
 };
 
-const PanneauMarker: React.FC<{ panneau: Panneau }> = ({ panneau }) => {
+const PanneauMarker: React.FC<{ panneau: Panneau, typeName: string }> = ({ panneau, typeName }) => {
     const map = useMap();
     const [searchParams] = useSearchParams();
     const markerRef = useRef<L.Marker>(null);
+    const [copied, setCopied] = useState(false);
+
+    const handleShare = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const url = `${window.location.origin}/?panneauId=${panneau.id}`;
+
+        if (navigator.share) {
+            navigator.share({
+                title: 'AURA Catcher',
+                text: `Regarde ce magnifique panneau de la Région : ${panneau.comment || ''}`,
+                url: url
+            }).catch(console.error);
+        } else {
+            navigator.clipboard.writeText(url).then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            });
+        }
+    };
 
     useEffect(() => {
         const idParam = searchParams.get('panneauId');
@@ -115,11 +130,34 @@ const PanneauMarker: React.FC<{ panneau: Panneau }> = ({ panneau }) => {
                 },
             }}
         >
-            <Popup>
+            <Popup className="custom-popup">
                 <div className="popup-content">
-                    <img src={panneau.imageUrl} alt="Panneau" className="popup-img" />
-                    <p>{panneau.comment}</p>
-                    <small>Par {panneau.author || 'Anonyme'}</small>
+                    {panneau.imageUrl && (
+                        <div className="popup-img-wrapper">
+                            <img src={panneau.imageUrl} alt="Panneau AURA" className="popup-img" loading="lazy" />
+                            <span className="popup-badge">{typeName}</span>
+                        </div>
+                    )}
+                    <div className="popup-details">
+                        {panneau.comment ? (
+                            <p className="popup-comment">"{panneau.comment}"</p>
+                        ) : (
+                            <p className="popup-comment empty-comment">Aucun commentaire</p>
+                        )}
+                        <div className="popup-footer">
+                            <div className="popup-author-date">
+                                <span className="popup-author">
+                                    <User size={12} className="popup-icon" /> {panneau.author || 'Anonyme'}
+                                </span>
+                                <span className="popup-date">
+                                    <Calendar size={12} className="popup-icon" /> {new Date(panneau.createdAt).toLocaleDateString()}
+                                </span>
+                            </div>
+                            <button className="popup-share-btn" onClick={handleShare} title="Partager ce panneau">
+                                {copied ? <Check size={14} color="green" /> : <Share2 size={14} />}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </Popup>
         </Marker>
@@ -152,7 +190,7 @@ const MapPage: React.FC = () => {
                 setTypes(data);
                 setSelectedTypeIds(data.map(t => t.id)); // select all by default
             } catch (error) {
-                 console.error('Failed to load types:', error);
+                console.error('Failed to load types:', error);
             }
         };
         loadPanneaux();
@@ -177,8 +215,8 @@ const MapPage: React.FC = () => {
     };
 
     const toggleType = (id: number) => {
-        setSelectedTypeIds(prev => 
-            prev.includes(id) 
+        setSelectedTypeIds(prev =>
+            prev.includes(id)
                 ? prev.filter(tId => tId !== id)
                 : [...prev, id]
         );
@@ -197,7 +235,7 @@ const MapPage: React.FC = () => {
     return (
         <div className="map-page">
             <div className="map-filter-container">
-                <button 
+                <button
                     className="filter-toggle-btn"
                     onClick={() => setIsFilterOpen(!isFilterOpen)}
                 >
@@ -206,29 +244,29 @@ const MapPage: React.FC = () => {
 
                 {isFilterOpen && (
                     <div className="filter-dropdown">
-                        <div 
+                        <div
                             className="filter-dropdown-item select-all-item"
                             onClick={toggleAllTypes}
                         >
-                            <input 
-                                type="checkbox" 
-                                checked={selectedTypeIds.length === types.length} 
-                                readOnly 
+                            <input
+                                type="checkbox"
+                                checked={selectedTypeIds.length === types.length}
+                                readOnly
                             />
                             <strong>Tout sélectionner</strong>
                         </div>
                         {types.map(t => {
                             const isActive = selectedTypeIds.includes(t.id);
                             return (
-                                <div 
-                                    key={t.id} 
+                                <div
+                                    key={t.id}
                                     className="filter-dropdown-item"
                                     onClick={() => toggleType(t.id)}
                                 >
-                                    <input 
-                                        type="checkbox" 
-                                        checked={isActive} 
-                                        readOnly 
+                                    <input
+                                        type="checkbox"
+                                        checked={isActive}
+                                        readOnly
                                     />
                                     <span>{t.name}</span>
                                 </div>
@@ -247,13 +285,14 @@ const MapPage: React.FC = () => {
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
 
-                {filteredPanneaux.map((panneau) => (
-                    <PanneauMarker key={panneau.id} panneau={panneau} />
-                ))}
+                {filteredPanneaux.map((panneau) => {
+                    const typeName = types.find(t => t.id === panneau.typeId)?.name || 'Inconnu';
+                    return <PanneauMarker key={panneau.id} panneau={panneau} typeName={typeName} />;
+                })}
 
                 <MapEvents onMapClick={handleMapClick} isActive={isPickingLocation} />
                 <LocationControl />
-                <MapUrlHandler />
+                <MapUrlHandler panneaux={panneaux} />
             </MapContainer>
 
             {/* FAB */}
