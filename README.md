@@ -100,25 +100,26 @@ To deploy the entire stack (Frontend, Backend, and MariaDB) using Docker:
 
 ### Data Management
 
-The project includes scripts to manage your data (database and uploaded photos). **Note: These scripts require the Docker containers to be running.**
+#### Database Backups
 
-#### Backup
-To create a backup of the database and the data directory:
+The database is automatically backed up using the **Ofelia** job scheduler container. 
+By default, backups are created every day at midnight and kept for 7 days.
+
+**Where to find backups:**
+Backups are stored as `.sql` files on your host machine in the `data/db_backups/` directory.
+
+**How to change periodicity and length (retention):**
+You can configure the backup schedule and retention by editing the `ofelia/config.ini` file:
+- `schedule = @midnight`: Change this to alter the frequency (e.g., `@every 12h`, or cron syntax `0 0 2 * * *` for 2 AM).
+- `mtime +7`: Change the `+7` in the `command` line to alter how many days backups are kept before deletion.
+
+**How to restore a backup:**
+To restore a specific backup, use the following command from the project root. Make sure to replace `db_YYYY-MM-DD_HH-MM-SS.sql` with the actual filename of your backup.
 
 ```bash
-./backup.sh
+docker exec -i aura-catcher-mariadb sh -c 'mariadb -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' < data/db_backups/db_YYYY-MM-DD_HH-MM-SS.sql
 ```
-This will create a timestamped folder in the `backups/` directory (e.g., `backups/2025-01-01_12-00-00/`).
-
-#### Restore
-To restore data from a previous backup:
-
-```bash
-./restore.sh backups/<timestamp_folder>
-```
-*Example:* `./restore.sh backups/2025-01-01_12-00-00`
-
-**Warning**: Restoring will overwrite the current database and data files with those from the backup.
+*Warning: Restoring will overwrite the current database data with the data from the backup.*
 
 ### Accessing Logs
 

@@ -9,11 +9,23 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - aura-catcher-mariadb_data:/var/lib/mysql
+      - ./data/db_backups:/backups
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: always
+
+  ofelia:
+    image: mcuadros/ofelia:latest
+    container_name: aura-catcher-scheduler
+    depends_on:
+      aura-catcher-mariadb:
+        condition: service_healthy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./ofelia/config.ini:/etc/ofelia/config.ini:ro
     restart: always
 
   aura-catcher-backend:
