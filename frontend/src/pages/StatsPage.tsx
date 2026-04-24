@@ -28,6 +28,8 @@ const StatsPage: React.FC = () => {
 
     return (
         <div className="stats-container">
+            {/* Visually hidden h1 for SEO and screen readers. Ensures a proper document outline. */}
+            <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', border: 0 }}>Statistiques AURA Catcher</h1>
             <div className="stats-grid">
                 <div className="stat-card">
                     <div className="stat-value">{globalStats?.totalPanels || 0}</div>
@@ -40,7 +42,7 @@ const StatsPage: React.FC = () => {
             </div>
 
             <div className="stats-section">
-                <div className="section-title">Top 10 des Contributeurs</div>
+                <h2 className="section-title">Top 10 des Contributeurs</h2>
                 <div className="table-container">
                     <table className="data-table">
                         <thead>
@@ -70,7 +72,7 @@ const StatsPage: React.FC = () => {
             </div>
 
             <div className="stats-section">
-                <div className="section-title">Derniers panneaux</div>
+                <h2 className="section-title">Derniers panneaux</h2>
                 <div className="table-container">
                     <table className="data-table">
                         <thead>

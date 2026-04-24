@@ -6,6 +6,8 @@ import { initDb } from './db';
 import { DATA_DIR, LOGS_DIR, PHOTOS_DIR, TEMP_DIR, ORIGINAL_DIR, SMALL_DIR } from './config';
 import path from 'path';
 
+import compression from 'compression';
+
 /**
  * Main application entry point.
  * Configures Express server, static file serving for uploads, and API routes.
@@ -25,10 +27,11 @@ app.get('/', (req, res) => {
     res.send('AURA Catcher Backend is running.');
 });
 
+app.use(compression());
 app.use(express.json());
-// Serve uploads
-app.use('/photos/original', express.static(ORIGINAL_DIR));
-app.use('/photos/small', express.static(SMALL_DIR));
+// Serve uploads with caching (e.g. 7 days) to improve loading speed
+app.use('/photos/original', express.static(ORIGINAL_DIR, { maxAge: '7d' }));
+app.use('/photos/small', express.static(SMALL_DIR, { maxAge: '7d' }));
 app.use('/api', routes);
 
 initDb().then(() => {

@@ -3,7 +3,7 @@
 Un site web pour trouver tous les panneaux "La Région aide..." autour de chez vous !!
 
 <p align="center">
-    <img src="frontend/src/assets/screenshot.webp" width="600px" >
+    <img src="frontend/public/screenshot.jpeg" width="600px" >
 <p\>
 
 Vous pouvez aussi y créer vos propres panneaux personnalisés !
@@ -89,10 +89,10 @@ npm run lint
 To deploy the entire stack (Frontend, Backend, and MariaDB) using Docker:
 
 1.  **Build and Start**:
-    Run the following command from the project root:
-    ```bash
-    docker compose --env-file ./backend/.env up --build
-    ```
+Run the following command from the project root:
+```bash
+docker compose --env-file ./backend/.env up --build
+```
 
 2.  **Access the Application**:
     -   **Frontend**: [http://localhost:4657](http://localhost:4657)
@@ -138,7 +138,7 @@ docker compose exec aura-catcher-backend cat logs/activity.log
 ## Roadmap / TODO
 
 - [ ] **Generator**: fix the small issue with the generator (responsive layout, text)
-- [ ] **Share sign**: use opengraph (https://opengraph.dev) metadata to share the image (might need to add image generation on backend) and add a share button (https://developer.mozilla.org/en-US/docs/Web/API/Web_Share_API)
+- [ ] **Share sign**: add a share button (https://developer.mozilla.org/en-US/docs/Web/API/Web_Share_API)
 - [ ] **Stats**: Add a stats page to display the number of signs, photos, leaderboard.
 - [ ] **Authentication**: Implement user accounts and granular permissions.
 - [ ] **Modify**: Allow users to modify signs and photos

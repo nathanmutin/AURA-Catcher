@@ -15,5 +15,17 @@ export default defineConfig({
         changeOrigin: true,
       }
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
+          leaflet: ['leaflet', 'react-leaflet', 'leaflet.locatecontrol'],
+          icons: ['lucide-react', '@icons-pack/react-simple-icons'],
+          utils: ['exifr']
+        }
+      }
+    }
   }
 })
