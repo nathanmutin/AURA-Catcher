@@ -47,6 +47,8 @@ const FakeReCaptcha: React.FC = () => {
     });
 
     useEffect(() => {
+        if (!shouldCheck) return;
+        
         if (isSuccess && panneaux && images.length === 0) {
             const communePanels = panneaux.filter((p: any) => p.typeId === 2 && p.imageUrl);
 
