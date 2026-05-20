@@ -1,46 +1,32 @@
 import type { Panneau, PanelType } from '../../../backend/src/types.ts';
+import { get, post } from '../utils/apiClient';
 
 const BASE_URL = import.meta.env.VITE_API_URL || '';
 
 export const fetchPanneaux = async (): Promise<Panneau[]> => {
-    const response = await fetch(`${BASE_URL}/api/panneaux`);
-    if (!response.ok) {
-        throw new Error('Failed to fetch panneaux');
-    }
-    return response.json();
+    return get<Panneau[]>('/api/panneaux');
+};
+
+export const photoUrl = (panneauId: number, imageIndex: number, isSmall: boolean = true): string => {
+    return `${BASE_URL}/api/panneaux/${panneauId}/photos/${imageIndex}?size=${isSmall ? 'small' : 'original'}`;
 };
 
 export const createPanneau = async (formData: FormData): Promise<Panneau> => {
-    const response = await fetch(`${BASE_URL}/api/panneaux`, {
-        method: 'POST',
-        body: formData,
-    });
-    if (!response.ok) {
-        throw new Error('Failed to create panneau');
-    }
-    return response.json();
+    return post<Panneau>('/api/panneaux', formData);
 };
 
 export const fetchGlobalStats = async (): Promise<{ totalPanels: number; totalContributors: number }> => {
-    const response = await fetch(`${BASE_URL}/api/stats/global`);
-    if (!response.ok) {
-        throw new Error('Failed to fetch global stats');
-    }
-    return response.json();
+    return get<{ totalPanels: number; totalContributors: number }>('/api/stats/global');
 };
 
 export const fetchLeaderboard = async (): Promise<Array<{ username: string; count: number; totalPanels: number }>> => {
-    const response = await fetch(`${BASE_URL}/api/stats/leaderboard`);
-    if (!response.ok) {
-        throw new Error('Failed to fetch leaderboard');
-    }
-    return response.json();
+    return get<Array<{ username: string; count: number; totalPanels: number }>>('/api/stats/leaderboard');
 };
 
 export const fetchTypes = async (): Promise<PanelType[]> => {
-    const response = await fetch(`${BASE_URL}/api/types`);
-    if (!response.ok) {
-        throw new Error('Failed to fetch types');
-    }
-    return response.json();
+    return get<PanelType[]>('/api/types');
+};
+
+export const uploadPhotoToPanel = async (panneauId: number, formData: FormData): Promise<{ success: boolean; imageCount: number; message: string }> => {
+    return post<{ success: boolean; imageCount: number; message: string }>(`/api/panneaux/${panneauId}/photos`, formData);
 };

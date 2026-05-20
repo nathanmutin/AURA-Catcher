@@ -2,18 +2,31 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Camera, MapPin, X } from 'lucide-react';
 import { getGPSFromImage } from '../../utils/geo';
-import { createPanneau, fetchTypes } from '../../api/client';
+import { createPanneau, fetchTypes, uploadPhotoToPanel } from '../../api/client';
+import { STORAGE_KEYS } from '../../utils/constants';
 import './AddPanneauModal.css';
+
+type ModalMode = 'create' | 'addPhoto';
 
 interface Props {
     isOpen: boolean;
     onClose: () => void;
-    onPickLocation: () => void;
-    pickedLocation: { lat: number; lng: number } | null;
+    onPickLocation?: () => void;
+    pickedLocation?: { lat: number; lng: number } | null;
     onSuccess: () => void;
+    mode?: ModalMode;
+    panneauId?: number;
 }
 
-const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pickedLocation, onSuccess }) => {
+const AddPanneauModal: React.FC<Props> = ({ 
+    isOpen, 
+    onClose, 
+    onPickLocation, 
+    pickedLocation, 
+    onSuccess, 
+    mode = 'create',
+    panneauId 
+}) => {
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -25,11 +38,11 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
     const fileInputRef = useRef<HTMLInputElement>(null);
     const queryClient = useQueryClient();
 
-    const { data: types = [] } = useQuery({ queryKey: ['types'], queryFn: fetchTypes, enabled: isOpen });
+    const { data: types = [] } = useQuery({ queryKey: ['types'], queryFn: fetchTypes, enabled: isOpen && mode === 'create' });
 
     useEffect(() => {
         if (isOpen) {
-            const savedAuthor = localStorage.getItem('lastAuthor');
+            const savedAuthor = localStorage.getItem(STORAGE_KEYS.LAST_AUTHOR);
             if (savedAuthor) {
                 setAuthor(savedAuthor);
             }
@@ -37,10 +50,10 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
     }, [isOpen]);
 
     useEffect(() => {
-        if (types.length > 0 && typeId === '') {
+        if (mode === 'create' && types.length > 0 && typeId === '') {
             setTypeId(types[0].id);
         }
-    }, [types, typeId]);
+    }, [types, typeId, mode]);
 
     useEffect(() => {
         if (pickedLocation) {
@@ -86,10 +99,13 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
             setFile(fileToUpload);
             setPreview(URL.createObjectURL(fileToUpload));
 
-            // Use original file for GPS to preserve EXIF data
-            const gps = await getGPSFromImage(originalFile);
-            if (gps) {
-                setLocation(gps);
+            // Only extract GPS for create mode
+            if (mode === 'create') {
+                // Use original file for GPS to preserve EXIF data
+                const gps = await getGPSFromImage(originalFile);
+                if (gps) {
+                    setLocation(gps);
+                }
             }
         }
     };
@@ -109,24 +125,55 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
         }
     });
 
+    const uploadPhotoMutation = useMutation({
+        mutationFn: (formData: FormData) => {
+            if (!panneauId) throw new Error('Panel ID required');
+            return uploadPhotoToPanel(panneauId, formData);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['panneaux'] });
+            onSuccess();
+            handleClose();
+        },
+        onError: (err) => {
+            console.error(err);
+            alert('Erreur lors de l\'envoi');
+        }
+    });
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!file || !location) return;
+        
+        if (mode === 'addPhoto') {
+            if (!file) return;
 
-        const formData = new FormData();
-        formData.append('image', file);
-        formData.append('lat', location.lat.toString());
-        formData.append('lng', location.lng.toString());
-        formData.append('comment', comment);
-        if (author) {
-            formData.append('author', author);
-            localStorage.setItem('lastAuthor', author);
-        }
-        if (typeId) {
-            formData.append('typeId', typeId.toString());
-        }
+            const formData = new FormData();
+            formData.append('image', file);
+            if (author) {
+                formData.append('author', author);
+                localStorage.setItem(STORAGE_KEYS.LAST_AUTHOR, author);
+            }
 
-        createPanneauMutation.mutate(formData);
+            uploadPhotoMutation.mutate(formData);
+        } else {
+            // mode === 'create'
+            if (!file || !location) return;
+
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('lat', location.lat.toString());
+            formData.append('lng', location.lng.toString());
+            formData.append('comment', comment);
+            if (author) {
+                formData.append('author', author);
+                localStorage.setItem(STORAGE_KEYS.LAST_AUTHOR, author);
+            }
+            if (typeId) {
+                formData.append('typeId', typeId.toString());
+            }
+
+            createPanneauMutation.mutate(formData);
+        }
     };
 
     const handleClose = () => {
@@ -134,19 +181,20 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
         setPreview(null);
         setLocation(null);
         setComment('');
-        // Do not clear author to keep it for next time in the same session if they reopen?
-        // Actually useEffect resets it from localStorage on open, so safe to clear or keep.
         onClose();
     };
 
     if (!isOpen) return null;
+
+    const isLoading = mode === 'create' ? createPanneauMutation.isPending : uploadPhotoMutation.isPending;
+    const isPhotoMode = mode === 'addPhoto';
 
     return (
         <div className="modal-overlay">
             <div className="modal-card">
                 <button className="close-btn" onClick={handleClose}><X /></button>
 
-                <h2>Ajouter un panneau</h2>
+                <h2>{isPhotoMode ? 'Ajouter une photo' : 'Ajouter un panneau'}</h2>
 
                 <form onSubmit={handleSubmit}>
                     {/* Image Upload Area */}
@@ -172,31 +220,29 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
                         />
                     </div>
 
-                    {/* Location Status */}
-                    <div className="location-section">
-                        <div className="location-status">
-                            <MapPin size={20} className={location ? 'text-green' : 'text-gray'} />
-                            <span>
-                                {location
-                                    ? `Localisé : ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`
-                                    : 'Position manquante'}
-                            </span>
-                        </div>
+                    {/* Location Status - only show in create mode */}
+                    {!isPhotoMode && (
+                        <div className="location-section">
+                            <div className="location-status">
+                                <MapPin size={20} className={location ? 'text-green' : 'text-gray'} />
+                                <span>
+                                    {location
+                                        ? `Localisé : ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`
+                                        : 'Position manquante'}
+                                </span>
+                            </div>
 
-                        <button
-                            type="button"
-                            className="btn-secondary"
-                            onClick={() => {
-                                // If we pick location, we must preserve the file state when reopening
-                                // For MVP, we assume MapPage holds the state or we pass it up?
-                                // Actually, if we close modal, we lose state unless parent holds it.
-                                // Parent should hold state or we just hide this modal with CSS.
-                                onPickLocation();
-                            }}
-                        >
-                            Choisir sur la carte
-                        </button>
-                    </div>
+                            <button
+                                type="button"
+                                className="btn-secondary"
+                                onClick={() => {
+                                    onPickLocation?.();
+                                }}
+                            >
+                                Choisir sur la carte
+                            </button>
+                        </div>
+                    )}
 
                     <div className="form-group">
                         <label>Auteur (pseudo)</label>
@@ -208,35 +254,41 @@ const AddPanneauModal: React.FC<Props> = ({ isOpen, onClose, onPickLocation, pic
                         />
                     </div>
 
-                    <div className="form-group">
-                        <label>Type de panneau</label>
-                        <select
-                            value={typeId}
-                            onChange={e => setTypeId(Number(e.target.value))}
-                            required
-                        >
-                            {types.map(t => (
-                                <option key={t.id} value={t.id}>{t.name} ({t.points} pts)</option>
-                            ))}
-                        </select>
-                    </div>
+                    {/* Type selector - only show in create mode */}
+                    {!isPhotoMode && (
+                        <div className="form-group">
+                            <label>Type de panneau</label>
+                            <select
+                                value={typeId}
+                                onChange={e => setTypeId(Number(e.target.value))}
+                                required
+                            >
+                                {types.map(t => (
+                                    <option key={t.id} value={t.id}>{t.name} ({t.points} pts)</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
-                    <div className="form-group">
-                        <label>Commentaire</label>
-                        <input
-                            type="text"
-                            value={comment}
-                            onChange={e => setComment(e.target.value)}
-                            placeholder="Ex: Près de la mairie"
-                        />
-                    </div>
+                    {/* Comment - only show in create mode */}
+                    {!isPhotoMode && (
+                        <div className="form-group">
+                            <label>Commentaire</label>
+                            <input
+                                type="text"
+                                value={comment}
+                                onChange={e => setComment(e.target.value)}
+                                placeholder="Ex: Près de la mairie"
+                            />
+                        </div>
+                    )}
 
                     <button
                         type="submit"
                         className="btn-primary w-full"
-                        disabled={!file || !location || createPanneauMutation.isPending}
+                        disabled={isPhotoMode ? !file || isLoading : (!file || !location || isLoading)}
                     >
-                        {createPanneauMutation.isPending ? 'Envoi...' : 'Envoyer'}
+                        {isLoading ? 'Envoi...' : (isPhotoMode ? 'Ajouter la photo' : 'Envoyer')}
                     </button>
                 </form>
             </div>

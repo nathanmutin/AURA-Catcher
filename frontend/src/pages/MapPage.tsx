@@ -4,12 +4,13 @@ import { useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Panneau } from '../../../backend/src/types';
-import { fetchPanneaux, fetchTypes } from '../api/client';
+import { fetchPanneaux, fetchTypes, photoUrl } from '../api/client';
 import L from 'leaflet';
 import { LocateControl } from "leaflet.locatecontrol";
 import "leaflet.locatecontrol/dist/L.Control.Locate.min.css";
 import { Plus, User, Calendar, Share2, Check } from 'lucide-react';
 import AddPanneauModal from '../components/AddPanneau/AddPanneauModal.tsx';
+import { PhotoCarousel } from '../components/PhotoCarousel';
 import './MapPage.css';
 
 // Fix for default marker icon
@@ -84,6 +85,8 @@ const PanneauMarker: React.FC<{ panneau: Panneau, typeName: string }> = ({ panne
     const [searchParams] = useSearchParams();
     const markerRef = useRef<L.Marker>(null);
     const [copied, setCopied] = useState(false);
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+    const [imageCount, setImageCount] = useState(panneau.imageCount);
 
     const handleShare = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -103,6 +106,11 @@ const PanneauMarker: React.FC<{ panneau: Panneau, typeName: string }> = ({ panne
         }
     };
 
+    const handleUploadSuccess = () => {
+        setImageCount(imageCount + 1);
+        setIsUploadModalOpen(false);
+    };
+
     useEffect(() => {
         const idParam = searchParams.get('panneauId');
         if (idParam && Number(idParam) === panneau.id) {
@@ -113,55 +121,65 @@ const PanneauMarker: React.FC<{ panneau: Panneau, typeName: string }> = ({ panne
     }, [searchParams, panneau.id]);
 
     return (
-        <Marker
-            ref={markerRef}
-            position={[panneau.lat, panneau.lng]}
-            eventHandlers={{
-                click: () => {
-                    const mapSize = map.getSize();
-                    // To place the marker at 3/4 of the viewport height (near the bottom),
-                    // we need the center of the map to be 1/4 of the viewport height ABOVE the marker.
+        <>
+            <Marker
+                ref={markerRef}
+                position={[panneau.lat, panneau.lng]}
+                eventHandlers={{
+                    click: () => {
+                        const mapSize = map.getSize();
+                        const targetCenterPoint = map.latLngToContainerPoint([panneau.lat, panneau.lng]);
+                        targetCenterPoint.y -= mapSize.y * 0.2;
 
-                    const targetCenterPoint = map.latLngToContainerPoint([panneau.lat, panneau.lng]);
-                    targetCenterPoint.y -= mapSize.y * 0.2;
+                        const newCenter = map.containerPointToLatLng(targetCenterPoint);
 
-                    const newCenter = map.containerPointToLatLng(targetCenterPoint);
-
-                    map.flyTo(newCenter, map.getZoom());
-                },
-            }}
-        >
-            <Popup className="custom-popup">
-                <div className="popup-content">
-                    {panneau.imageUrl && (
+                        map.flyTo(newCenter, map.getZoom());
+                    },
+                }}
+            >
+                <Popup className="custom-popup">
+                    <div className="popup-content">
                         <div className="popup-img-wrapper">
-                            <img src={panneau.imageUrl} alt="Panneau AURA" className="popup-img" loading="lazy" />
+                            <PhotoCarousel
+                                photoUrl={(index) => photoUrl(panneau.id, index)}
+                                imageCount={imageCount}
+                                alt="Panneau AURA"
+                                onAddPhotoClick={() => setIsUploadModalOpen(true)}
+                            />
                             <span className="popup-badge">{typeName}</span>
                         </div>
-                    )}
-                    <div className="popup-details">
-                        {panneau.comment ? (
-                            <p className="popup-comment">"{panneau.comment}"</p>
-                        ) : (
-                            <p className="popup-comment empty-comment">Aucun commentaire</p>
-                        )}
-                        <div className="popup-footer">
-                            <div className="popup-author-date">
-                                <span className="popup-author">
-                                    <User size={12} className="popup-icon" /> {panneau.author || 'Anonyme'}
-                                </span>
-                                <span className="popup-date">
-                                    <Calendar size={12} className="popup-icon" /> {new Date(panneau.createdAt).toLocaleDateString()}
-                                </span>
+                        <div className="popup-details">
+                            {panneau.comment ? (
+                                <p className="popup-comment">"{panneau.comment}"</p>
+                            ) : (
+                                <p className="popup-comment empty-comment">Aucun commentaire</p>
+                            )}
+                            <div className="popup-footer">
+                                <div className="popup-author-date">
+                                    <span className="popup-author">
+                                        <User size={12} className="popup-icon" /> {panneau.author || 'Anonyme'}
+                                    </span>
+                                    <span className="popup-date">
+                                        <Calendar size={12} className="popup-icon" /> {new Date(panneau.createdAt).toLocaleDateString()}
+                                    </span>
+                                </div>
+                                <button className="popup-share-btn" onClick={handleShare} title="Partager ce panneau">
+                                    {copied ? <Check size={14} color="green" /> : <Share2 size={14} />}
+                                </button>
                             </div>
-                            <button className="popup-share-btn" onClick={handleShare} title="Partager ce panneau">
-                                {copied ? <Check size={14} color="green" /> : <Share2 size={14} />}
-                            </button>
                         </div>
                     </div>
-                </div>
-            </Popup>
-        </Marker>
+                </Popup>
+            </Marker>
+
+            <AddPanneauModal
+                isOpen={isUploadModalOpen}
+                onClose={() => setIsUploadModalOpen(false)}
+                onSuccess={handleUploadSuccess}
+                mode="addPhoto"
+                panneauId={panneau.id}
+            />
+        </>
     );
 };
 
@@ -220,10 +238,6 @@ const MapPage: React.FC = () => {
 
     return (
         <div className="map-page">
-            {/* Visually hidden h1 for SEO and screen readers. Ensures a proper document outline. */}
-            <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', border: 0 }}>
-                AURA Catcher - Carte collaborative des panneaux bleus de la Région Auvergne-Rhône-Alpes
-            </h1>
             <div className="map-filter-container">
                 <button
                     className="filter-toggle-btn"

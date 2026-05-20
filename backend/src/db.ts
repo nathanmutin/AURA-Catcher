@@ -94,3 +94,24 @@ export const initDb = async () => {
 export const getPool = () => {
   return pool;
 };
+
+export const getOrCreateUser = async (conn: mariadb.Connection, username: string): Promise<number | null> => {
+  if (!username || typeof username !== 'string' || username.trim() === '') {
+    return null; // Return null for invalid usernames
+  }
+
+  const trimmedUsername = username.trim();
+  
+  // Check if user exists
+  const userRows = await conn.query('SELECT id FROM users WHERE username = ?', [trimmedUsername]);
+  if (userRows.length > 0) {
+    return userRows[0].id;
+  }
+  
+  // Create user if doesn't exist
+  const userRes = await conn.query(
+    'INSERT INTO users (username, password) VALUES (?, ?)',
+    [trimmedUsername, 'placeholder_password']
+  );
+  return parseInt(userRes.insertId.toString());
+};

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import './StatsPage.css';
-import { fetchGlobalStats, fetchLeaderboard, fetchPanneaux, fetchTypes } from '../api/client';
+import { fetchGlobalStats, fetchLeaderboard, fetchPanneaux, fetchTypes, photoUrl } from '../api/client';
 
 
 const ITEMS_PER_PAGE = 10;
@@ -28,8 +28,6 @@ const StatsPage: React.FC = () => {
 
     return (
         <div className="stats-container">
-            {/* Visually hidden h1 for SEO and screen readers. Ensures a proper document outline. */}
-            <h1 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', border: 0 }}>Statistiques AURA Catcher</h1>
             <div className="stats-grid">
                 <div className="stat-card">
                     <div className="stat-value">{globalStats?.totalPanels || 0}</div>
@@ -96,9 +94,7 @@ const StatsPage: React.FC = () => {
                                         title={`Panneau n°${p.id} - Cliquez pour voir sur la carte`}
                                     >
                                         <td>
-                                            {p.imageUrl && (
-                                                <img src={`${import.meta.env.VITE_API_URL || ''}${p.imageUrl}`} alt="Panel" className="panel-thumb" />
-                                            )}
+                                            <img src={photoUrl(p.id, 0)} alt="Panel" className="panel-thumb" />
                                         </td>
                                         <td>{date}</td>
                                         <td>{p.author || 'Anonyme'}</td>

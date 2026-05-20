@@ -3,7 +3,7 @@ import express from 'express';
 import fs from 'fs';
 import routes from './routes';
 import { initDb } from './db';
-import { DATA_DIR, LOGS_DIR, PHOTOS_DIR, TEMP_DIR, ORIGINAL_DIR, SMALL_DIR } from './config';
+import { LOGS_DIR, PHOTOS_DIR, TEMP_DIR, ORIGINAL_DIR, SMALL_DIR } from './config';
 import path from 'path';
 
 import compression from 'compression';
@@ -16,7 +16,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Ensure directories exist
-const dirs = [PHOTOS_DIR, TEMP_DIR, LOGS_DIR];
+const dirs = [PHOTOS_DIR, TEMP_DIR, LOGS_DIR, ORIGINAL_DIR, SMALL_DIR];
 dirs.forEach(dir => {
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
@@ -29,9 +29,6 @@ app.get('/', (req, res) => {
 
 app.use(compression());
 app.use(express.json());
-// Serve uploads with caching (e.g. 7 days) to improve loading speed
-app.use('/photos/original', express.static(ORIGINAL_DIR, { maxAge: '7d' }));
-app.use('/photos/small', express.static(SMALL_DIR, { maxAge: '7d' }));
 app.use('/api', routes);
 
 initDb().then(() => {
