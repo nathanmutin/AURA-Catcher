@@ -8,9 +8,9 @@ import { fetchPanneaux, fetchTypes, photoUrl } from '../api/client';
 import L from 'leaflet';
 import { LocateControl } from "leaflet.locatecontrol";
 import "leaflet.locatecontrol/dist/L.Control.Locate.min.css";
-import { Plus, User, Calendar, Share2, Check } from 'lucide-react';
+import { Plus, User, Calendar, Share2, Check, ImagePlus } from 'lucide-react';
 import AddPanneauModal from '../components/AddPanneau/AddPanneauModal.tsx';
-import { PhotoCarousel } from '../components/PhotoCarousel';
+import { PhotoCarousel } from '../components/Carousel/PhotoCarousel.tsx';
 import './MapPage.css';
 
 // Fix for default marker icon
@@ -144,7 +144,6 @@ const PanneauMarker: React.FC<{ panneau: Panneau, typeName: string }> = ({ panne
                                 photoUrl={(index) => photoUrl(panneau.id, index)}
                                 imageCount={imageCount}
                                 alt="Panneau AURA"
-                                onAddPhotoClick={() => setIsUploadModalOpen(true)}
                             />
                             <span className="popup-badge">{typeName}</span>
                         </div>
@@ -163,9 +162,19 @@ const PanneauMarker: React.FC<{ panneau: Panneau, typeName: string }> = ({ panne
                                         <Calendar size={12} className="popup-icon" /> {new Date(panneau.createdAt).toLocaleDateString()}
                                     </span>
                                 </div>
-                                <button className="popup-share-btn" onClick={handleShare} title="Partager ce panneau">
-                                    {copied ? <Check size={14} color="green" /> : <Share2 size={14} />}
-                                </button>
+                                <div className="popup-actions">
+                                    <button 
+                                        className="popup-add-photo-btn" 
+                                        onClick={() => setIsUploadModalOpen(true)} 
+                                        title="Ajouter une photo"
+                                        aria-label="Ajouter une photo"
+                                    >
+                                        <ImagePlus size={18} />
+                                    </button>
+                                    <button className="popup-share-btn" onClick={handleShare} title="Partager ce panneau">
+                                        {copied ? <Check size={18} color="green" /> : <Share2 size={18} />}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

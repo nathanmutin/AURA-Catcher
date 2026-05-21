@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import './PhotoCarousel.css';
 
 interface PhotoCarouselProps {
     photoUrl: (index: number) => string;
     imageCount: number;
     alt: string;
-    onAddPhotoClick?: () => void;
 }
 
-export const PhotoCarousel: React.FC<PhotoCarouselProps> = ({ photoUrl, imageCount, alt, onAddPhotoClick }) => {
+export const PhotoCarousel: React.FC<PhotoCarouselProps> = ({ photoUrl, imageCount, alt }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
 
     useEffect(() => {
@@ -88,18 +87,6 @@ export const PhotoCarousel: React.FC<PhotoCarouselProps> = ({ photoUrl, imageCou
                     </>
                 )}
             </div>
-
-            {onAddPhotoClick && (
-                <button
-                    className="carousel-add-photo-btn"
-                    onClick={onAddPhotoClick}
-                    title="Ajouter une photo"
-                    aria-label="Ajouter une photo"
-                >
-                    <Plus size={18} />
-                    Ajouter une photo
-                </button>
-            )}
         </div>
     );
 };

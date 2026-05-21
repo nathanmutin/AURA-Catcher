@@ -73,6 +73,33 @@
     border-top: 1px solid #eee;
 }
 
+.popup-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.popup-add-photo-btn {
+    background: none;
+    border: none;
+    color: var(--aura-blue, #0056b3);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.popup-add-photo-btn:hover {
+    background-color: rgba(0, 86, 179, 0.1);
+}
+
+.popup-add-photo-btn:active {
+    transform: scale(0.9);
+}
+
 .popup-author-date {
     display: flex;
     flex-direction: column;
