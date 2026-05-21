@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Camera, MapPin, X } from 'lucide-react';
-import { getGPSFromImage } from '../../utils/geo';
+import { handleHEIC, getGPSFromImage } from '../../utils/photos';
 import { createPanneau, fetchTypes, uploadPhotoToPanel } from '../../api/client';
 import { STORAGE_KEYS } from '../../utils/constants';
 import './AddPanneauModal.css';
@@ -30,7 +30,6 @@ const AddPanneauModal: React.FC<Props> = ({
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-    const [isConverting, setIsConverting] = useState(false);
     const [comment, setComment] = useState('');
     const [author, setAuthor] = useState('');
     const [typeId, setTypeId] = useState<number | ''>('');
@@ -64,37 +63,7 @@ const AddPanneauModal: React.FC<Props> = ({
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const originalFile = e.target.files[0];
-            let fileToUpload = originalFile;
-
-            // Check for HEIC
-            if (originalFile.type === 'image/heic' || originalFile.type === 'image/heif' || originalFile.name.toLowerCase().endsWith('.heic')) {
-                setIsConverting(true);
-                try {
-                    // La librairie heic2any est importée dynamiquement pour éviter de la charger au démarrage
-                    // car elle est super mega lourde (1.35MB comparée à 500KB pour le reste du code)
-                    const heic2anyModule = await import('heic2any');
-                    const heic2any = heic2anyModule.default;
-                    const convertedBlob = await heic2any({
-                        blob: originalFile,
-                        toType: 'image/jpeg',
-                        quality: 0.8
-                    });
-
-                    // heic2any can return an array if the HEIC has multiple images
-                    const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-
-                    fileToUpload = new File([blob], originalFile.name.replace(/\.(heic|heif)$/i, '.jpg'), {
-                        type: 'image/jpeg'
-                    });
-                } catch (error) {
-                    console.error("HEIC conversion failed", error);
-                    alert("Impossible de convertir l'image HEIC.");
-                    setIsConverting(false);
-                    return;
-                } finally {
-                    setIsConverting(false);
-                }
-            }
+            let fileToUpload = await handleHEIC(originalFile);
 
             setFile(fileToUpload);
             setPreview(URL.createObjectURL(fileToUpload));
@@ -141,7 +110,7 @@ const AddPanneauModal: React.FC<Props> = ({
         }
     });
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
         
         if (mode === 'addPhoto') {
@@ -199,11 +168,7 @@ const AddPanneauModal: React.FC<Props> = ({
                 <form onSubmit={handleSubmit}>
                     {/* Image Upload Area */}
                     <div className="upload-area" onClick={() => fileInputRef.current?.click()}>
-                        {isConverting ? (
-                            <div className="upload-placeholder">
-                                <p>Conversion du format HEIC...</p>
-                            </div>
-                        ) : preview ? (
+                        {preview ? (
                             <img src={preview} alt="Preview" className="upload-preview" />
                         ) : (
                             <div className="upload-placeholder">

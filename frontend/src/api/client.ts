@@ -1,5 +1,5 @@
 import type { Panneau, PanelType } from '../../../backend/src/types.ts';
-import { get, post } from '../utils/apiClient';
+import { get, post } from './apiClient.ts';
 
 const BASE_URL = import.meta.env.VITE_API_URL || '';
 

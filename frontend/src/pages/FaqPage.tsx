@@ -2,10 +2,10 @@ import React from 'react';
 import { SiGithub } from '@icons-pack/react-simple-icons';
 import { Mail } from 'lucide-react';
 /* @ts-ignore */
-import supervilleImage from '../assets/superville.webp';
-import appart1Image from '../assets/radio.webp';
-import appart2Image from '../assets/chiottard.webp';
-import mapImage from '../assets/map.webp';
+import supervilleImage from '../assets/faq/superville.webp';
+import appart1Image from '../assets/faq/radio.webp';
+import appart2Image from '../assets/faq/chiottard.webp';
+import mapImage from '../assets/faq/map.webp';
 
 import './FaqPage.css';
 

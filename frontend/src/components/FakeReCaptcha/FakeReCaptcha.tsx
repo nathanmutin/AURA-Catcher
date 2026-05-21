@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchPanneaux } from '../../api/client';
+import { fetchPanneaux, photoUrl } from '../../api/client';
 import './FakeReCaptcha.css';
 
 interface CaptchaImage {
@@ -50,7 +50,7 @@ const FakeReCaptcha: React.FC = () => {
         if (!shouldCheck) return;
         
         if (isSuccess && panneaux && images.length === 0) {
-            const communePanels = panneaux.filter((p: any) => p.typeId === 2 && p.imageUrl);
+            const communePanels = panneaux.filter((p: any) => p.typeId === 2);
 
             if (communePanels.length > 0) {
                 // If we don't have enough panels, repeat them to reach 6
@@ -63,7 +63,7 @@ const FakeReCaptcha: React.FC = () => {
                 const shuffledPanels = shuffleArray(availablePanels).slice(0, 6);
                 const auraImages: CaptchaImage[] = shuffledPanels.map((p: any, index: number) => ({
                     id: `aura-${p.id}-${index}`,
-                    src: p.imageUrl,
+                    src: photoUrl(p.id, 0),
                     isAura: true
                 }));
 

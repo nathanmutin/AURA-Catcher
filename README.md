@@ -9,7 +9,7 @@ Un site web pour trouver tous les panneaux "La Région aide..." autour de chez v
 Vous pouvez aussi y créer vos propres panneaux personnalisés !
 
 <p align="center">
-    <img src="frontend/src/assets/exemple.webp" width="200px" >
+    <img src="frontend/src/assets/faq/exemple.webp" width="200px" >
 <p\>
 
 Il s'agit encore d'une version brouillon, toute aide est la bienvenue pour contribuer au projet ! La prochaine version est en construction sur la branche `dev`.

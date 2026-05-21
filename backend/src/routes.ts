@@ -6,7 +6,6 @@ import { TEMP_DIR, LOGS_DIR, SMALL_DIR, ORIGINAL_DIR } from './config';
 import { Panneau } from './types';
 import fs from 'fs';
 import path from 'path';
-import constants from 'constants';
 
 
 const router = Router();
