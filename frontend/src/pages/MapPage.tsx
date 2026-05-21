@@ -1,16 +1,16 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Panneau } from '../../../backend/src/types';
-import { fetchPanneaux, fetchTypes, photoUrl } from '../api/client';
+import { fetchPanneaux, fetchTypes } from '../api/client';
 import L from 'leaflet';
 import { LocateControl } from "leaflet.locatecontrol";
 import "leaflet.locatecontrol/dist/L.Control.Locate.min.css";
-import { Plus, User, Calendar, Share2, Check, ImagePlus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import AddPanneauModal from '../components/AddPanneau/AddPanneauModal.tsx';
-import { PhotoCarousel } from '../components/Carousel/PhotoCarousel.tsx';
+import { PanneauMarker } from '../components/Marker/PanneauMarker.tsx';
 import './MapPage.css';
 
 // Fix for default marker icon
@@ -80,121 +80,10 @@ const MapUrlHandler: React.FC<{ panneaux: Panneau[] }> = ({ panneaux }) => {
     return null;
 };
 
-const PanneauMarker: React.FC<{ panneau: Panneau, typeName: string }> = ({ panneau, typeName }) => {
-    const map = useMap();
-    const [searchParams] = useSearchParams();
-    const markerRef = useRef<L.Marker>(null);
-    const [copied, setCopied] = useState(false);
-    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-    const [imageCount, setImageCount] = useState(panneau.imageCount);
-
-    const handleShare = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        const url = `${window.location.origin}/?panneauId=${panneau.id}`;
-
-        if (navigator.share) {
-            navigator.share({
-                title: 'AURA Catcher',
-                text: `Regarde ce magnifique panneau de la Région : ${panneau.comment || ''}`,
-                url: url
-            }).catch(console.error);
-        } else {
-            navigator.clipboard.writeText(url).then(() => {
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-            });
-        }
-    };
-
-    const handleUploadSuccess = () => {
-        setImageCount(imageCount + 1);
-        setIsUploadModalOpen(false);
-    };
-
-    useEffect(() => {
-        const idParam = searchParams.get('panneauId');
-        if (idParam && Number(idParam) === panneau.id) {
-            if (markerRef.current) {
-                markerRef.current.openPopup();
-            }
-        }
-    }, [searchParams, panneau.id]);
-
-    return (
-        <>
-            <Marker
-                ref={markerRef}
-                position={[panneau.lat, panneau.lng]}
-                eventHandlers={{
-                    click: () => {
-                        const mapSize = map.getSize();
-                        const targetCenterPoint = map.latLngToContainerPoint([panneau.lat, panneau.lng]);
-                        targetCenterPoint.y -= mapSize.y * 0.2;
-
-                        const newCenter = map.containerPointToLatLng(targetCenterPoint);
-
-                        map.flyTo(newCenter, map.getZoom());
-                    },
-                }}
-            >
-                <Popup className="custom-popup">
-                    <div className="popup-content">
-                        <div className="popup-img-wrapper">
-                            <PhotoCarousel
-                                photoUrl={(index) => photoUrl(panneau.id, index)}
-                                imageCount={imageCount}
-                                alt="Panneau AURA"
-                            />
-                            <span className="popup-badge">{typeName}</span>
-                        </div>
-                        <div className="popup-details">
-                            {panneau.comment ? (
-                                <p className="popup-comment">"{panneau.comment}"</p>
-                            ) : (
-                                <p className="popup-comment empty-comment">Aucun commentaire</p>
-                            )}
-                            <div className="popup-footer">
-                                <div className="popup-author-date">
-                                    <span className="popup-author">
-                                        <User size={12} className="popup-icon" /> {panneau.author || 'Anonyme'}
-                                    </span>
-                                    <span className="popup-date">
-                                        <Calendar size={12} className="popup-icon" /> {new Date(panneau.createdAt).toLocaleDateString()}
-                                    </span>
-                                </div>
-                                <div className="popup-actions">
-                                    <button 
-                                        className="popup-add-photo-btn" 
-                                        onClick={() => setIsUploadModalOpen(true)} 
-                                        title="Ajouter une photo"
-                                        aria-label="Ajouter une photo"
-                                    >
-                                        <ImagePlus size={18} />
-                                    </button>
-                                    <button className="popup-share-btn" onClick={handleShare} title="Partager ce panneau">
-                                        {copied ? <Check size={18} color="green" /> : <Share2 size={18} />}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </Popup>
-            </Marker>
-
-            <AddPanneauModal
-                isOpen={isUploadModalOpen}
-                onClose={() => setIsUploadModalOpen(false)}
-                onSuccess={handleUploadSuccess}
-                mode="addPhoto"
-                panneauId={panneau.id}
-            />
-        </>
-    );
-};
-
 const MapPage: React.FC = () => {
     const { data: panneaux = [] } = useQuery({ queryKey: ['panneaux'], queryFn: fetchPanneaux });
     const { data: types = [] } = useQuery({ queryKey: ['types'], queryFn: fetchTypes });
+    const [searchParams] = useSearchParams();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isPickingLocation, setIsPickingLocation] = useState(false);
@@ -244,6 +133,7 @@ const MapPage: React.FC = () => {
     };
 
     const filteredPanneaux = panneaux.filter(p => selectedTypeIds.includes(p.typeId || 7)); // Defaulting missing typeId to Autre (7) if any
+    const selectedPanneauId = searchParams.get('panneauId') ? Number(searchParams.get('panneauId')) : null;
 
     return (
         <div className="map-page">
@@ -300,7 +190,8 @@ const MapPage: React.FC = () => {
 
                 {filteredPanneaux.map((panneau) => {
                     const typeName = types.find(t => t.id === panneau.typeId)?.name || 'Inconnu';
-                    return <PanneauMarker key={panneau.id} panneau={panneau} typeName={typeName} />;
+                    const isSelected = panneau.id === selectedPanneauId;
+                    return <PanneauMarker key={panneau.id} panneau={panneau} typeName={typeName} isSelected={isSelected} />;
                 })}
 
                 <MapEvents onMapClick={handleMapClick} isActive={isPickingLocation} />
