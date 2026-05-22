@@ -19,7 +19,6 @@ export const PanneauMarker: React.FC<PanneauMarkerProps> = ({ panneau, typeName,
     const markerRef = useRef<L.Marker>(null);
     const [copied, setCopied] = useState(false);
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-    const [imageCount, setImageCount] = useState(panneau.imageCount);
 
     const handleShare = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -40,7 +39,6 @@ export const PanneauMarker: React.FC<PanneauMarkerProps> = ({ panneau, typeName,
     };
 
     const handleUploadSuccess = () => {
-        setImageCount(imageCount + 1);
         setIsUploadModalOpen(false);
     };
 
@@ -71,17 +69,17 @@ export const PanneauMarker: React.FC<PanneauMarkerProps> = ({ panneau, typeName,
                     <div className="popup-content">
                         <div className="popup-img-wrapper">
                             <PhotoCarousel
-                                photoUrl={(index) => photoUrl(panneau.id, index)}
-                                imageCount={imageCount}
+                                photoUrl={(imageId) => photoUrl(imageId)}
+                                imageIds={panneau.imageIds}
                                 alt="Panneau AURA"
                             />
-                            <span className="popup-badge">{typeName}</span>
                         </div>
+                        <div className="popup-type popup-badge">{typeName}</div>
                         <div className="popup-details">
                             {panneau.comment ? (
-                                <p className="popup-comment">"{panneau.comment}"</p>
+                                <div className="popup-comment">"{panneau.comment}"</div>
                             ) : (
-                                <p className="popup-comment empty-comment">Aucun commentaire</p>
+                                <div className="popup-comment empty-comment">Aucun commentaire</div>
                             )}
                             <div className="popup-footer">
                                 <div className="popup-author-date">

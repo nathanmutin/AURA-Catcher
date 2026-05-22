@@ -94,7 +94,11 @@ const StatsPage: React.FC = () => {
                                         title={`Panneau n°${p.id} - Cliquez pour voir sur la carte`}
                                     >
                                         <td>
-                                            <img src={photoUrl(p.id, 0)} alt="Panel" className="panel-thumb" />
+                                            {p.imageIds.length > 0 ? (
+                                                <img src={photoUrl(p.imageIds[0])} alt="Panel" className="panel-thumb" />
+                                            ) : (
+                                                <div className="panel-thumb panel-thumb--empty" />
+                                            )}
                                         </td>
                                         <td>{date}</td>
                                         <td>{p.author || 'Anonyme'}</td>

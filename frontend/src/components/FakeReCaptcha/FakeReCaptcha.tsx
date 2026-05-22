@@ -63,7 +63,7 @@ const FakeReCaptcha: React.FC = () => {
                 const shuffledPanels = shuffleArray(availablePanels).slice(0, 6);
                 const auraImages: CaptchaImage[] = shuffledPanels.map((p: any, index: number) => ({
                     id: `aura-${p.id}-${index}`,
-                    src: photoUrl(p.id, 0),
+                    src: photoUrl(p.imageIds[0]),
                     isAura: true
                 }));
 

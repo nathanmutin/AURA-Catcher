@@ -42,37 +42,57 @@ router.get('/panneaux', async (req, res) => {
     let conn;
     try {
         conn = await getPool().getConnection();
-                const rows = await conn.query(`
-            SELECT 
-                p.id, p.lat, p.lng, p.comment, p.createdAt, p.type_id,
-                COUNT(i.id) as imageCount,
+        const panelRows = await conn.query(`
+            SELECT
+                p.id,
+                p.lat,
+                p.lng,
+                p.comment,
+                p.createdAt,
+                p.type_id,
                 u.username
             FROM panneaux p
-            LEFT JOIN images i ON p.id = i.panneau_id
             LEFT JOIN users u ON p.author_id = u.id
-            GROUP BY p.id
             ORDER BY p.createdAt DESC
         `);
 
-        interface Row {
+        const imageRows = await conn.query(`
+            SELECT id, panneau_id
+            FROM images
+            ORDER BY panneau_id, main_image DESC, createdAt DESC, id DESC
+        `);
+
+        interface PanelRow {
             id: number;
             lat: number;
             lng: number;
             comment: string | null;
             createdAt: Date;
-            imageCount: number;
             username: string | null;
             type_id: number | null;
         }
 
-        const panneaux: Panneau[] = rows.map((row: Row) => ({
+        interface ImageRow {
+            id: number;
+            panneau_id: number;
+        }
+
+        const imageIdsByPanel = new Map<number, number[]>();
+        imageRows.forEach((row: ImageRow) => {
+            const panneauId = Number(row.panneau_id);
+            const imageIds = imageIdsByPanel.get(panneauId) ?? [];
+            imageIds.push(Number(row.id));
+            imageIdsByPanel.set(panneauId, imageIds);
+        });
+
+        const panneaux: Panneau[] = panelRows.map((row: PanelRow) => ({
             id: row.id,
             lat: row.lat,
             lng: row.lng,
             comment: row.comment || undefined,
             createdAt: row.createdAt.toISOString(),
             author: row.username || undefined,
-            imageCount: Number(row.imageCount),
+            imageIds: imageIdsByPanel.get(row.id) ?? [],
             typeId: row.type_id || undefined,
         }));
 
@@ -123,10 +143,12 @@ router.post('/panneaux', upload.single('image'), async (req, res) => {
         const panneauId = panneauRes.insertId;
 
         // 3. Insert image (one row with both versions)
-        await conn.query(
+        const imageRes = await conn.query(
             'INSERT INTO images (fileNameOriginal, fileNameSmall, panneau_id, main_image, author_id) VALUES (?, ?, ?, ?, ?)',
             [fileNameOriginal, fileNameSmall, panneauId, true, authorId]
         );
+
+        const imageId = parseInt(imageRes.insertId.toString());
 
         await conn.commit();
 
@@ -137,7 +159,7 @@ router.post('/panneaux', upload.single('image'), async (req, res) => {
             id: parseInt(panneauId.toString()), 
             lat, 
             lng, 
-            imageCount: 1, 
+            imageIds: [imageId],
             comment, 
             author: author || null, 
             typeId: typeId || 1 
@@ -231,20 +253,20 @@ router.get('/types', async (req, res) => {
 });
 
 /**
- * GET /api/panneaux/:id/photos/:index?size=small|original
- * Serves the image for a specific billboard and index.
+ * GET /api/photo/:id?size=small|original
+ * Serves the image for a specific image id.
  */
-router.get('/panneaux/:id/photos/:index', async (req, res) => {
+router.get('/photo/:id', async (req, res) => {
     let conn;
     try {
-        const { id, index } = req.params;
+        const { id } = req.params;
         const { size } = req.query;
         const isSmall = size !== 'original';
 
         conn = await getPool().getConnection();
         const rows = await conn.query(
-            'SELECT fileNameOriginal, fileNameSmall FROM images WHERE panneau_id = ? ORDER BY main_image DESC, createdAt ASC LIMIT 1 OFFSET ?',
-            [id, parseInt(index)]
+            'SELECT fileNameOriginal, fileNameSmall FROM images WHERE id = ?',
+            [id]
         );
 
         if (rows.length === 0) {
@@ -281,7 +303,7 @@ router.get('/panneaux/:id/photos/:index', async (req, res) => {
  * - image: The image file (required)
  * - author: Optional username/author name
  * 
- * @returns {Object} Updated imageCount and success message
+ * @returns {Object} The new image id and success message
  */
 router.post('/panneaux/:id/photos', upload.single('image'), async (req, res) => {
     let conn;
@@ -317,17 +339,11 @@ router.post('/panneaux/:id/photos', upload.single('image'), async (req, res) => 
         );
 
         // Insert new image as main image
-        await conn.query(
+        const imageRes = await conn.query(
             'INSERT INTO images (fileNameOriginal, fileNameSmall, panneau_id, main_image, author_id) VALUES (?, ?, ?, ?, ?)',
             [fileNameOriginal, fileNameSmall, id, true, authorId]
         );
-
-        // Get updated image count
-        const countRows = await conn.query(
-            'SELECT COUNT(*) as imageCount FROM images WHERE panneau_id = ?',
-            [id]
-        );
-        const imageCount = Number(countRows[0].imageCount);
+        const imageId = parseInt(imageRes.insertId.toString());
 
         await conn.commit();
 
@@ -335,7 +351,7 @@ router.post('/panneaux/:id/photos', upload.single('image'), async (req, res) => 
 
         res.status(201).json({ 
             success: true,
-            imageCount: imageCount,
+            imageId,
             message: 'Photo added successfully'
         });
 

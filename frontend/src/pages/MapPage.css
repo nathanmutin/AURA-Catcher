@@ -17,7 +17,7 @@
     font-family: var(--font-family, 'Inter', sans-serif);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px; /* reduced from 12px to tighten spacing between elements */
 }
 
 .popup-img-wrapper {
@@ -42,18 +42,36 @@
     backdrop-filter: blur(4px);
 }
 
+/* Place the type badge under the carousel when using both classes
+   (popup-type popup-badge) by overriding the absolute positioning. */
+.popup-type {
+    position: static;
+    top: auto;
+    right: auto;
+    margin-top: 4px; /* slightly smaller top margin */
+    background-color: rgba(255, 255, 255, 0.95);
+    color: var(--aura-blue, #0056b3);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+    display: inline-block;
+    align-self: flex-start;
+}
+
 .popup-details {
     display: flex;
     flex-direction: column;
-    gap: 8px;
 }
 
 .popup-comment {
     font-size: 0.95rem;
     color: #333;
     line-height: 1.4;
-    margin: 0;
     font-style: italic;
+    margin-bottom: 10px;
+    padding-left: 4px;
 }
 
 .empty-comment {
@@ -68,7 +86,6 @@
     align-items: center;
     font-size: 0.8rem;
     color: #666;
-    margin-top: 4px;
     padding-top: 8px;
     border-top: 1px solid #eee;
 }

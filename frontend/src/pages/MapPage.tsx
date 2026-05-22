@@ -220,6 +220,7 @@ const MapPage: React.FC = () => {
                 onPickLocation={startPickingLocation}
                 pickedLocation={pickedLocation}
                 onSuccess={handleSuccess}
+                panneaux={panneaux}
             />
         </div>
     );

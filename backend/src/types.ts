@@ -8,7 +8,7 @@ export interface Panneau {
     id: number;
     lat: number;
     lng: number;
-    imageCount: number;
+    imageIds: number[];
     comment?: string;
     author?: string;
     typeId?: number;
