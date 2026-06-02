@@ -14,10 +14,12 @@
     "heic-to": "^1.4.3",
     "leaflet": "^1.9.4",
     "leaflet.locatecontrol": "^0.85.1",
+    "leaflet.markercluster": "^1.5.3",
     "lucide-react": "^0.562.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-leaflet": "^5.0.0",
+    "react-leaflet-markercluster": "^5.0.0-rc.0",
     "react-router-dom": "^7.11.0"
   },
   "devDependencies": {

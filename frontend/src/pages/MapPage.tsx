@@ -3,6 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import MarkerClusterGroup from 'react-leaflet-markercluster';
 import type { Panneau } from '../../../backend/src/types';
 import { fetchPanneaux, fetchTypes } from '../api/client';
 import L from 'leaflet';
@@ -48,10 +51,12 @@ const LocationControl = () => {
         const lc = new LocateControl({
             locateOptions: {
                 enableHighAccuracy: true
-            }
+            },
+            showPopup: false,
         });
         lc.addTo(map);
-        // lc.start(); // Optional: if you want it to start automatically
+        // Pour que ça se lance automatiquement à l'ouverture de la page
+        lc.start();
 
         return () => {
             lc.remove();
@@ -188,11 +193,22 @@ const MapPage: React.FC = () => {
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
 
-                {filteredPanneaux.map((panneau) => {
-                    const typeName = types.find(t => t.id === panneau.typeId)?.name || 'Inconnu';
-                    const isSelected = panneau.id === selectedPanneauId;
-                    return <PanneauMarker key={panneau.id} panneau={panneau} typeName={typeName} isSelected={isSelected} />;
-                })}
+                <MarkerClusterGroup
+                  disableClusteringAtZoom={14}
+                  maxClusterRadius={40}
+                  spiderfyOnMaxZoom={true}
+                  zoomToBoundsOnClick={true}
+                  showCoverageOnHover={false}
+                  chunkedLoading={true}
+                  chunkInterval={200}
+                  chunkDelay={50}
+                >
+                    {filteredPanneaux.map((panneau) => {
+                        const typeName = types.find(t => t.id === panneau.typeId)?.name || 'Inconnu';
+                        const isSelected = panneau.id === selectedPanneauId;
+                        return <PanneauMarker key={panneau.id} panneau={panneau} typeName={typeName} isSelected={isSelected} />;
+                    })}
+                </MarkerClusterGroup>
 
                 <MapEvents onMapClick={handleMapClick} isActive={isPickingLocation} />
                 <LocationControl />

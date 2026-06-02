@@ -299,3 +299,19 @@
     height: 16px;
     accent-color: var(--aura-blue, #0056b3);
 }
+
+/* Force all marker cluster variants to use Aura blue. */
+.marker-cluster-small,
+.marker-cluster-medium,
+.marker-cluster-large {
+    background-color: rgba(0, 150, 222, 0.3);
+    background-color: color-mix(in srgb, var(--aura-blue, #0096de) 30%, white);
+}
+
+.marker-cluster-small div,
+.marker-cluster-medium div,
+.marker-cluster-large div {
+    background-color: var(--aura-blue, #0096de);
+    color: #ffffff;
+    font-weight: 700;
+}
