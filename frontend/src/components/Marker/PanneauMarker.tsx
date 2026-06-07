@@ -53,7 +53,7 @@ export const PanneauMarker: React.FC<PanneauMarkerProps> = ({ panneau, typeName,
     };
 
     const handleSelected = () => {
-        const lat_offset = map.getSize().y / 200000;
+        const lat_offset = map.getSize().y / 150000;
         map.setView([panneau.lat + lat_offset, panneau.lng], 15, { animate: false });
 
         const timer = setTimeout(() => {

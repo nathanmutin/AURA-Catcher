@@ -6,7 +6,6 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import MarkerClusterGroup from 'react-leaflet-markercluster';
-import type { Panneau } from '../../../backend/src/types';
 import { fetchPanneaux, fetchTypes } from '../api/client';
 import L from 'leaflet';
 import { LocateControl } from "leaflet.locatecontrol";
