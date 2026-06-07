@@ -55,32 +55,11 @@ const LocationControl = () => {
             showPopup: false,
         });
         lc.addTo(map);
-        // Pour que ça se lance automatiquement à l'ouverture de la page
-        lc.start();
 
         return () => {
             lc.remove();
         };
     }, [map]);
-
-    return null;
-};
-
-const MapUrlHandler: React.FC<{ panneaux: Panneau[] }> = ({ panneaux }) => {
-    const map = useMap();
-    const [searchParams] = useSearchParams();
-
-    useEffect(() => {
-        const panneauId = searchParams.get('panneauId');
-
-        if (panneauId && panneaux.length > 0) {
-            const panneau = panneaux.find(p => p.id === Number(panneauId));
-            if (panneau) {
-                map.setView([panneau.lat, panneau.lng], 15);
-                return;
-            }
-        }
-    }, [searchParams, map, panneaux]);
 
     return null;
 };
@@ -212,7 +191,6 @@ const MapPage: React.FC = () => {
 
                 <MapEvents onMapClick={handleMapClick} isActive={isPickingLocation} />
                 <LocationControl />
-                <MapUrlHandler panneaux={panneaux} />
             </MapContainer>
 
             {/* FAB */}

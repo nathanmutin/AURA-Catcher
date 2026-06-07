@@ -66,18 +66,11 @@
 }
 
 .popup-comment {
-    font-size: 0.95rem;
-    color: #333;
+    font-size: 0.85rem;
+    color: #888;
     line-height: 1.4;
-    font-style: italic;
     margin-bottom: 10px;
     padding-left: 4px;
-}
-
-.empty-comment {
-    color: #888;
-    font-style: normal;
-    font-size: 0.85rem;
 }
 
 .popup-footer {

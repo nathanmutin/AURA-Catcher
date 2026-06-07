@@ -42,9 +42,29 @@ export const PanneauMarker: React.FC<PanneauMarkerProps> = ({ panneau, typeName,
         setIsUploadModalOpen(false);
     };
 
+    const handleMarkerClick = () => {
+        const mapSize = map.getSize();
+        const targetCenterPoint = map.latLngToContainerPoint([panneau.lat, panneau.lng]);
+        targetCenterPoint.y -= mapSize.y * 0.2;
+
+        const newCenter = map.containerPointToLatLng(targetCenterPoint);
+
+        map.flyTo(newCenter, map.getZoom());
+    };
+
+    const handleSelected = () => {
+        const lat_offset = map.getSize().y / 200000;
+        map.setView([panneau.lat + lat_offset, panneau.lng], 15, { animate: false });
+
+        const timer = setTimeout(() => {
+            markerRef.current?.openPopup();
+        }, 200);
+        return () => clearTimeout(timer);
+    }
+
     useEffect(() => {
-        if (isSelected && markerRef.current) {
-            markerRef.current.openPopup();
+        if (isSelected) {
+            handleSelected();
         }
     }, [isSelected]);
 
@@ -54,15 +74,7 @@ export const PanneauMarker: React.FC<PanneauMarkerProps> = ({ panneau, typeName,
                 ref={markerRef}
                 position={[panneau.lat, panneau.lng]}
                 eventHandlers={{
-                    click: () => {
-                        const mapSize = map.getSize();
-                        const targetCenterPoint = map.latLngToContainerPoint([panneau.lat, panneau.lng]);
-                        targetCenterPoint.y -= mapSize.y * 0.2;
-
-                        const newCenter = map.containerPointToLatLng(targetCenterPoint);
-
-                        map.flyTo(newCenter, map.getZoom());
-                    },
+                    click: handleMarkerClick
                 }}
             >
                 <Popup className="custom-popup">
@@ -76,11 +88,7 @@ export const PanneauMarker: React.FC<PanneauMarkerProps> = ({ panneau, typeName,
                         </div>
                         <div className="popup-type popup-badge">{typeName}</div>
                         <div className="popup-details">
-                            {panneau.comment ? (
-                                <div className="popup-comment">"{panneau.comment}"</div>
-                            ) : (
-                                <div className="popup-comment empty-comment">Aucun commentaire</div>
-                            )}
+                            <div className="popup-comment">{panneau.comment ? panneau.comment : "Aucun commentaire"}</div>
                             <div className="popup-footer">
                                 <div className="popup-author-date">
                                     <span className="popup-author">
