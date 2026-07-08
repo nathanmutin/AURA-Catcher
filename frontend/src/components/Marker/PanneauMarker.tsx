@@ -2,19 +2,19 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { User, Calendar, Share2, Check, ImagePlus } from 'lucide-react';
-import type { Panneau } from '../../../../backend/src/types';
+import type { Panneau, PanelType } from '../../../../backend/src/types';
 import { photoUrl } from '../../api/client';
 import { PhotoCarousel } from './PhotoCarousel';
 import AddPanneauModal from '../AddPanneau/AddPanneauModal';
-import '../../pages/MapPage.css';
+import './PanneauMarker.css';
 
 interface PanneauMarkerProps {
     panneau: Panneau;
-    typeName: string;
+    types: PanelType[];
     isSelected?: boolean;
 }
 
-export const PanneauMarker: React.FC<PanneauMarkerProps> = ({ panneau, typeName, isSelected = false }) => {
+export const PanneauMarker: React.FC<PanneauMarkerProps> = ({ panneau, types, isSelected = false }) => {
     const map = useMap();
     const markerRef = useRef<L.Marker>(null);
     const [copied, setCopied] = useState(false);
@@ -50,6 +50,20 @@ export const PanneauMarker: React.FC<PanneauMarkerProps> = ({ panneau, typeName,
         const newCenter = map.containerPointToLatLng(targetCenterPoint);
 
         map.flyTo(newCenter, map.getZoom());
+
+        // If spiderfied, open the popup after a short delay to ensure it opens correctly
+        const spiderfiedMarker = markerRef.current as L.Marker & {
+            _spiderLeg?: unknown;
+            __parent?: { spiderfy: () => void };
+        };
+
+        if (spiderfiedMarker._spiderLeg !== undefined) {
+            const timer = setTimeout(() => {
+                spiderfiedMarker.__parent?.spiderfy();
+                markerRef.current?.openPopup();
+            }, 400);
+            return () => clearTimeout(timer);
+        }
     };
 
     const handleSelected = () => {
@@ -86,7 +100,18 @@ export const PanneauMarker: React.FC<PanneauMarkerProps> = ({ panneau, typeName,
                                 alt="Panneau AURA"
                             />
                         </div>
-                        <div className="popup-type popup-badge">{typeName}</div>
+
+                        <div className="popup-types">
+                            {panneau.typeIds.map(typeId => {
+                                const type = types.find(t => t.id === typeId);
+                                return type ? (
+                                    <span key={type.id} className="popup-type">
+                                        {type.name}
+                                    </span>
+                                ) : null;
+                            })}
+                        </div>
+
                         <div className="popup-details">
                             <div className="popup-comment">{panneau.comment ? panneau.comment : "Aucun commentaire"}</div>
                             <div className="popup-footer">

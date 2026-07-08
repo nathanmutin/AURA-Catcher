@@ -11,7 +11,7 @@ export interface Panneau {
     imageIds: number[];
     comment?: string;
     author?: string;
-    typeId?: number;
+    typeIds: number[];
     createdAt: string; // ISO date string
 }
 

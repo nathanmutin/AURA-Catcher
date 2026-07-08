@@ -16,6 +16,8 @@ interface Props {
     onClose: () => void;
     onPickLocation?: () => void;
     pickedLocation?: { lat: number; lng: number } | null;
+    setPickedLocation?: (location: { lat: number; lng: number } | null) => void;
+    onResetLocation?: () => void;
     onSuccess: () => void;
     mode?: ModalMode;
     panneauId?: number;
@@ -25,8 +27,10 @@ interface Props {
 const AddPanneauModal: React.FC<Props> = ({ 
     isOpen, 
     onClose, 
-    onPickLocation, 
-    pickedLocation, 
+    onPickLocation,
+    pickedLocation,
+    setPickedLocation,
+    onResetLocation,
     onSuccess, 
     mode = 'create',
     panneauId,
@@ -39,9 +43,11 @@ const AddPanneauModal: React.FC<Props> = ({
     const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [comment, setComment] = useState('');
     const [author, setAuthor] = useState('');
-    const [typeId, setTypeId] = useState<number | ''>('');
+    const [typeIds, setTypeIds] = useState<number[]>([]);
+    const [isAddingType, setIsAddingType] = useState(false);
     const [skipNearbyCheck, setSkipNearbyCheck] = useState(false);
     const [nearbyPanels, setNearbyPanels] = useState<Array<Panneau & { distance: number }>>([]);
+
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const queryClient = useQueryClient();
@@ -56,12 +62,6 @@ const AddPanneauModal: React.FC<Props> = ({
             }
         }
     }, [isOpen]);
-
-    useEffect(() => {
-        if (modeInternal === 'create' && types.length > 0 && typeId === '') {
-            setTypeId(types[0].id);
-        }
-    }, [types, typeId, modeInternal]);
 
     useEffect(() => {
         if (pickedLocation) {
@@ -98,6 +98,9 @@ const AddPanneauModal: React.FC<Props> = ({
                 const gps = await getGPSFromImage(originalFile);
                 if (gps) {
                     setLocation(gps);
+                    if (setPickedLocation) {
+                        setPickedLocation(gps);
+                    }
                 }
             }
         }
@@ -162,9 +165,9 @@ const AddPanneauModal: React.FC<Props> = ({
                 formData.append('author', author);
                 localStorage.setItem(STORAGE_KEYS.LAST_AUTHOR, author);
             }
-            if (typeId) {
-                formData.append('typeId', typeId.toString());
-            }
+            typeIds.forEach(tid => {
+                formData.append('typeId', tid.toString());
+            });
 
             createPanneauMutation.mutate(formData);
         }
@@ -179,6 +182,7 @@ const AddPanneauModal: React.FC<Props> = ({
         setComment('');
         setSkipNearbyCheck(false);
         setNearbyPanels([]);
+        onResetLocation?.();
         onClose();
     };
 
@@ -279,16 +283,52 @@ const AddPanneauModal: React.FC<Props> = ({
                         {/* Type selector - only show in create mode */}
                         {!isPhotoMode && (
                             <div className="form-group">
-                                <label>Type de panneau</label>
-                                <select
-                                    value={typeId}
-                                    onChange={e => setTypeId(Number(e.target.value))}
-                                    required
-                                >
-                                    {types.map(t => (
-                                        <option key={t.id} value={t.id}>{t.name} ({t.points} pts)</option>
-                                    ))}
-                                </select>
+                                <label>Types de panneau</label>
+                                <div className="selected-types">
+                                    {typeIds.map(tid => {
+                                        const type = types.find(t => t.id === tid);
+                                        return type ? (
+                                            <span key={type.id} className="type-badge">
+                                                {type.name}
+                                                <button type="button" onClick={() => setTypeIds(prev => prev.filter(id => id !== type.id))}>
+                                                    <X size={14} />
+                                                </button>
+                                            </span>
+                                        ) : null;
+                                    })}
+                                    {isAddingType ? (
+                                        <div
+                                            className="add-type-dropdown"
+                                            tabIndex={0}
+                                            onBlur={() => setIsAddingType(false)}
+                                        >
+                                            {types
+                                                .filter(t => !typeIds.includes(t.id))
+                                                .map(t => (
+                                                    <button
+                                                        key={t.id}
+                                                        type="button"
+                                                        className="add-type-option"
+                                                        onMouseDown={e => {
+                                                            // prevent blur before click
+                                                            e.preventDefault();
+                                                            setTypeIds(prev => [...prev, t.id]);
+                                                            setIsAddingType(false);
+                                                        }}
+                                                    >
+                                                        {t.name} ({t.points} pts)
+                                                    </button>
+                                                ))}
+                                            {types.filter(t => !typeIds.includes(t.id)).length === 0 && (
+                                                <div className="no-types">Aucun type disponible</div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <button type="button" className="type-badge add-type-btn" onClick={() => setIsAddingType(true)}>
+                                            +
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         )}
 

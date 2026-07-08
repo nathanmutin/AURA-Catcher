@@ -25,6 +25,34 @@ export const initDb = async () => {
       )
     `);
 
+    // Create panneaux table
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS panneaux (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        lat REAL NOT NULL,
+        lng REAL NOT NULL,
+        comment TEXT,
+        author_id INT,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (author_id) REFERENCES users(id)
+      )
+    `);
+
+    // Create images table
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS images (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        fileNameOriginal VARCHAR(255) NOT NULL,
+        fileNameSmall VARCHAR(255) NOT NULL,
+        panneau_id INT NOT NULL,
+        author_id INT,
+        main_image BOOLEAN NOT NULL,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (panneau_id) REFERENCES panneaux(id),
+        FOREIGN KEY (author_id) REFERENCES users(id)
+      )
+    `);
+
     // Create panel_types table
     await conn.query(`
       CREATE TABLE IF NOT EXISTS panel_types (
@@ -52,33 +80,14 @@ export const initDb = async () => {
       `);
     }
 
-    // Create panneaux table
+    // Create panneau_types_mapping table
     await conn.query(`
-      CREATE TABLE IF NOT EXISTS panneaux (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        lat REAL NOT NULL,
-        lng REAL NOT NULL,
-        comment TEXT,
-        author_id INT,
-        type_id INT,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (author_id) REFERENCES users(id),
-        FOREIGN KEY (type_id) REFERENCES panel_types(id)
-      )
-    `);
-
-    // Create images table
-    await conn.query(`
-      CREATE TABLE IF NOT EXISTS images (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        fileNameOriginal VARCHAR(255) NOT NULL,
-        fileNameSmall VARCHAR(255) NOT NULL,
+      CREATE TABLE IF NOT EXISTS panneau_types_mapping (
         panneau_id INT NOT NULL,
-        author_id INT,
-        main_image BOOLEAN NOT NULL,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (panneau_id) REFERENCES panneaux(id),
-        FOREIGN KEY (author_id) REFERENCES users(id)
+        type_id INT NOT NULL,
+        PRIMARY KEY (panneau_id, type_id),
+        FOREIGN KEY (panneau_id) REFERENCES panneaux(id) ON DELETE CASCADE,
+        FOREIGN KEY (type_id) REFERENCES panel_types(id)
       )
     `);
 

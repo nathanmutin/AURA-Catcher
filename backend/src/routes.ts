@@ -49,7 +49,6 @@ router.get('/panneaux', async (req, res) => {
                 p.lng,
                 p.comment,
                 p.createdAt,
-                p.type_id,
                 u.username
             FROM panneaux p
             LEFT JOIN users u ON p.author_id = u.id
@@ -62,6 +61,11 @@ router.get('/panneaux', async (req, res) => {
             ORDER BY panneau_id, main_image DESC, createdAt DESC, id DESC
         `);
 
+        const typeRows = await conn.query(`
+            SELECT panneau_id, type_id
+            FROM panneau_types_mapping
+        `);
+
         interface PanelRow {
             id: number;
             lat: number;
@@ -69,12 +73,16 @@ router.get('/panneaux', async (req, res) => {
             comment: string | null;
             createdAt: Date;
             username: string | null;
-            type_id: number | null;
         }
 
         interface ImageRow {
             id: number;
             panneau_id: number;
+        }
+
+        interface TypeRow {
+            panneau_id: number;
+            type_id: number;
         }
 
         const imageIdsByPanel = new Map<number, number[]>();
@@ -85,6 +93,14 @@ router.get('/panneaux', async (req, res) => {
             imageIdsByPanel.set(panneauId, imageIds);
         });
 
+        const typeIdsByPanel = new Map<number, number[]>();
+        typeRows.forEach((row: TypeRow) => {
+            const panneauId = Number(row.panneau_id);
+            const typeIds = typeIdsByPanel.get(panneauId) ?? [];
+            typeIds.push(Number(row.type_id));
+            typeIdsByPanel.set(panneauId, typeIds);
+        });
+
         const panneaux: Panneau[] = panelRows.map((row: PanelRow) => ({
             id: row.id,
             lat: row.lat,
@@ -93,7 +109,7 @@ router.get('/panneaux', async (req, res) => {
             createdAt: row.createdAt.toISOString(),
             author: row.username || undefined,
             imageIds: imageIdsByPanel.get(row.id) ?? [],
-            typeId: row.type_id || undefined,
+            typeIds: typeIdsByPanel.get(row.id) ?? [],
         }));
 
         res.json(panneaux);
@@ -138,9 +154,16 @@ router.post('/panneaux', upload.single('image'), async (req, res) => {
         const authorId = await getOrCreateUser(conn, author);
 
         // 2. Insert panneau
-        const panneauRes = await conn.query('INSERT INTO panneaux (lat, lng, comment, author_id, type_id) VALUES (?, ?, ?, ?, ?)',
-            [lat, lng, comment, authorId, typeId || 1]);
+        const panneauRes = await conn.query('INSERT INTO panneaux (lat, lng, comment, author_id) VALUES (?, ?, ?, ?)',
+            [lat, lng, comment, authorId]);
         const panneauId = panneauRes.insertId;
+
+        // Insert type mappings
+        const types = Array.isArray(typeId) ? typeId : [typeId || 1];
+        for (const tid of types) {
+            await conn.query('INSERT INTO panneau_types_mapping (panneau_id, type_id) VALUES (?, ?)',
+                [panneauId, tid]);
+        }
 
         // 3. Insert image (one row with both versions)
         const imageRes = await conn.query(
@@ -153,7 +176,7 @@ router.post('/panneaux', upload.single('image'), async (req, res) => {
         await conn.commit();
 
         // Log the action
-        logAction(`[NEW PANEL] ID: ${panneauId}, Lat: ${lat}, Lng: ${lng}, Author: ${author || 'Anonymous'}, Image: ${fileNameOriginal}, IP: ${req.ip || 'unknown'}`);
+        logAction(`[NEW PANEL] ID: ${panneauId}, Lat: ${lat}, Lng: ${lng}, Author: ${author || 'Anonymous'}, Image: ${fileNameOriginal}, Types: ${types.join(', ')}, IP: ${req.ip || 'unknown'}`);
 
         res.status(201).json({ 
             id: parseInt(panneauId.toString()), 
@@ -162,7 +185,7 @@ router.post('/panneaux', upload.single('image'), async (req, res) => {
             imageIds: [imageId],
             comment, 
             author: author || null, 
-            typeId: typeId || 1 
+            typeIds: types
         });
 
 
@@ -212,10 +235,11 @@ router.get('/stats/leaderboard', async (req, res) => {
             SELECT 
                 u.username,
                 SUM(t.points) as count,
-                COUNT(p.id) as total_panels
+                COUNT(DISTINCT p.id) as total_panels
             FROM panneaux p
             JOIN users u ON p.author_id = u.id
-            LEFT JOIN panel_types t ON p.type_id = t.id
+            JOIN panneau_types_mapping ptm ON p.id = ptm.panneau_id
+            JOIN panel_types t ON ptm.type_id = t.id
             GROUP BY u.id
             ORDER BY count DESC
             LIMIT 10

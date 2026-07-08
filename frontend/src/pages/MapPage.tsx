@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, useMapEvents, useMap } from 'react-leaflet';
@@ -12,6 +12,7 @@ import { LocateControl } from "leaflet.locatecontrol";
 import "leaflet.locatecontrol/dist/L.Control.Locate.min.css";
 import { Plus } from 'lucide-react';
 import AddPanneauModal from '../components/AddPanneau/AddPanneauModal.tsx';
+import PickedLocationMarker from '../components/AddPanneau/PickedLocationMarker.tsx';
 import { PanneauMarker } from '../components/Marker/PanneauMarker.tsx';
 import './MapPage.css';
 
@@ -75,6 +76,15 @@ const MapPage: React.FC = () => {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     const [hasInitializedFilter, setHasInitializedFilter] = useState(false);
+    const locationSelectionTimerRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (locationSelectionTimerRef.current !== null) {
+                window.clearTimeout(locationSelectionTimerRef.current);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         if (types.length > 0 && !hasInitializedFilter) {
@@ -85,8 +95,16 @@ const MapPage: React.FC = () => {
 
     const handleMapClick = (latlng: L.LatLng) => {
         setPickedLocation({ lat: latlng.lat, lng: latlng.lng });
-        setIsPickingLocation(false);
-        setIsModalOpen(true);
+
+        if (locationSelectionTimerRef.current !== null) {
+            window.clearTimeout(locationSelectionTimerRef.current);
+        }
+
+        locationSelectionTimerRef.current = window.setTimeout(() => {
+            setIsPickingLocation(false);
+            setIsModalOpen(true);
+            locationSelectionTimerRef.current = null;
+        }, 300);
     };
 
     const startPickingLocation = () => {
@@ -115,7 +133,10 @@ const MapPage: React.FC = () => {
         }
     };
 
-    const filteredPanneaux = panneaux.filter(p => selectedTypeIds.includes(p.typeId || 7)); // Defaulting missing typeId to Autre (7) if any
+    // Panneaux dont les types correspondent aux types sélectionnés
+    const filteredPanneaux = panneaux.filter(p => p.typeIds.some(tid => selectedTypeIds.includes(tid)));
+    // Récupération de l'ID du panneau sélectionné depuis les paramètres de l'URL
+    // pour l'ouvrir automatiquement
     const selectedPanneauId = searchParams.get('panneauId') ? Number(searchParams.get('panneauId')) : null;
 
     return (
@@ -169,10 +190,10 @@ const MapPage: React.FC = () => {
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    maxZoom={19}
                 />
 
                 <MarkerClusterGroup
-                  disableClusteringAtZoom={14}
                   maxClusterRadius={40}
                   spiderfyOnMaxZoom={true}
                   zoomToBoundsOnClick={true}
@@ -182,14 +203,18 @@ const MapPage: React.FC = () => {
                   chunkDelay={50}
                 >
                     {filteredPanneaux.map((panneau) => {
-                        const typeName = types.find(t => t.id === panneau.typeId)?.name || 'Inconnu';
                         const isSelected = panneau.id === selectedPanneauId;
-                        return <PanneauMarker key={panneau.id} panneau={panneau} typeName={typeName} isSelected={isSelected} />;
+                        return <PanneauMarker key={panneau.id} panneau={panneau} types={types} isSelected={isSelected} />;
                     })}
                 </MarkerClusterGroup>
 
                 <MapEvents onMapClick={handleMapClick} isActive={isPickingLocation} />
                 <LocationControl />
+                <PickedLocationMarker
+                    location={pickedLocation}
+                    isActive={isPickingLocation}
+                    onLocationChange={setPickedLocation}
+                />
             </MapContainer>
 
             {/* FAB */}
@@ -202,7 +227,15 @@ const MapPage: React.FC = () => {
             {/* Picking Instruction */}
             {isPickingLocation && (
                 <div className="picking-instruction">
-                    <p>Touchez la carte pour placer le panneau</p>
+                    <p>
+                        Touchez la carte pour placer le panneau
+                        {pickedLocation && (
+                            <>
+                                <br />
+                                Position actuelle : {pickedLocation.lat.toFixed(4)}, {pickedLocation.lng.toFixed(4)}
+                            </>
+                        )}
+                    </p>
                     <button onClick={() => setIsPickingLocation(false)}>Annuler</button>
                 </div>
             )}
@@ -212,6 +245,11 @@ const MapPage: React.FC = () => {
                 onClose={() => setIsModalOpen(false)}
                 onPickLocation={startPickingLocation}
                 pickedLocation={pickedLocation}
+                setPickedLocation={setPickedLocation}
+                onResetLocation={() => {
+                    setPickedLocation(null);
+                    setIsPickingLocation(false);
+                }}
                 onSuccess={handleSuccess}
                 panneaux={panneaux}
             />

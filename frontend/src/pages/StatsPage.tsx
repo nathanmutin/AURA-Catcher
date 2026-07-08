@@ -78,14 +78,14 @@ const StatsPage: React.FC = () => {
                                 <th>Image</th>
                                 <th>Date</th>
                                 <th>Auteur</th>
-                                <th>Type</th>
+                                <th>Types</th>
                                 <th>Commentaire</th>
                             </tr>
                         </thead>
                         <tbody>
                             {currentPanneaux.map((p) => {
                                 const date = new Date(p.createdAt).toLocaleDateString();
-                                const typeName = types.find(t => t.id === p.typeId)?.name || 'Inconnu';
+                                const typeNames = p.typeIds.map(typeId => types.find(t => t.id === typeId)?.name).filter((v): v is string => !!v).join(', ') || 'Inconnu';
                                 return (
                                     <tr
                                         key={p.id}
@@ -102,7 +102,7 @@ const StatsPage: React.FC = () => {
                                         </td>
                                         <td>{date}</td>
                                         <td>{p.author || 'Anonyme'}</td>
-                                        <td>{typeName}</td>
+                                        <td>{typeNames}</td>
                                         <td>{p.comment || '-'}</td>
                                     </tr>
                                 );
