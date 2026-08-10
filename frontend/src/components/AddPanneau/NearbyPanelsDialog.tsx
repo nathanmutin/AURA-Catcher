@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, Image as ImageIcon } from 'lucide-react';
+import { AlertCircle, Image as ImageIcon, X } from 'lucide-react';
 import { photoUrl } from '../../api/client';
 import './NearbyPanelsDialog.css';
 
@@ -15,6 +15,7 @@ interface NearbyPanelsDialogProps {
   onAddPhoto: (panneauId: number) => void;
   onCreateNew: () => void;
   onPickDifferentLocation: () => void;
+  onClose: () => void;
   isOpen: boolean;
 }
 
@@ -23,6 +24,7 @@ const NearbyPanelsDialog: React.FC<NearbyPanelsDialogProps> = ({
   onAddPhoto,
   onCreateNew,
   onPickDifferentLocation,
+  onClose,
   isOpen,
 }) => {
   if (!isOpen || nearbyPanels.length === 0) {
@@ -32,6 +34,9 @@ const NearbyPanelsDialog: React.FC<NearbyPanelsDialogProps> = ({
   return (
     <div className="nearby-dialog-overlay">
       <div className="nearby-dialog-card">
+        <button className="close-btn" onClick={onClose} aria-label="Fermer">
+          <X size={18} />
+        </button>
         <div className="nearby-dialog-header">
           <div className="nearby-dialog-title-section">
             <AlertCircle size={24} className="nearby-dialog-icon" />

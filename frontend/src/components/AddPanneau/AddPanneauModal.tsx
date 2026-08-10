@@ -182,6 +182,7 @@ const AddPanneauModal: React.FC<Props> = ({
         setComment('');
         setSkipNearbyCheck(false);
         setNearbyPanels([]);
+        setTypeIds([]);
         onResetLocation?.();
         onClose();
     };
@@ -362,6 +363,7 @@ const AddPanneauModal: React.FC<Props> = ({
                 onAddPhoto={handleAddPhotoToExisting}
                 onCreateNew={handleCreateNewAnyway}
                 onPickDifferentLocation={handlePickDifferentLocation}
+                onClose={handleClose}
                 isOpen={modeInternal === 'nearbySelection' && nearbyPanels.length > 0}
             />
         </>

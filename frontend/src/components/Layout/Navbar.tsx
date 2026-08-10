@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { Map, SquarePen, BarChart, CircleQuestionMark } from 'lucide-react';
 import './Navbar.css';
 
-import iconSvg from '../../assets/icon.svg';
+import iconSvg from '../../assets/icons/favicon.svg';
 
 const Navbar: React.FC = () => {
     return (
@@ -37,7 +37,6 @@ const Navbar: React.FC = () => {
             {/* Desktop Top Bar */}
             <nav className="desktop-nav">
                 <div className="logo">
-                    {/* SVG icon in src/assets/icon.svg */}
                     <img src={iconSvg} alt="Logo" className="logo-img" />
                     <span className="logo-text">AURA Catcher</span>
                 </div>
