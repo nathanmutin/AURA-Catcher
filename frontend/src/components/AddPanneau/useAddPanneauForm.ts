@@ -5,7 +5,7 @@ import { handleHEIC, getGPSFromImage } from '../../utils/photos';
 import { createPanneau, fetchTypes, uploadPhotoToPanel } from '../../api/client';
 import { STORAGE_KEYS } from '../../utils/constants';
 import { getNearbyPanels } from '../../utils/distanceUtils';
-import type { Panneau } from '../../../../backend/src/types';
+import type { Panneau } from '@shared/types';
 
 export type ModalMode = 'create' | 'addPhoto' | 'nearbySelection';
 

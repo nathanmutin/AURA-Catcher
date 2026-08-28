@@ -1,9 +1,16 @@
+import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      // Doit rester synchronisé avec le "paths" de tsconfig.app.json.
+      '@shared/types': fileURLToPath(new URL('../backend/src/types.ts', import.meta.url)),
+    },
+  },
   server: {
     proxy: {
       '/photo': {

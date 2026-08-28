@@ -1,6 +1,6 @@
 import React from 'react';
 import { Camera, MapPin, X } from 'lucide-react';
-import type { Panneau } from '../../../../backend/src/types';
+import type { Panneau } from '@shared/types';
 import { useAddPanneauForm, type ModalMode } from './useAddPanneauForm';
 import NearbyPanelsDialog from './NearbyPanelsDialog';
 import './AddPanneauModal.css';

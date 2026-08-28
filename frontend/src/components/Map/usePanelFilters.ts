@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { PanelType, Panneau } from '../../../../backend/src/types';
+import type { PanelType, Panneau } from '@shared/types';
 
 export function usePanelFilters(types: PanelType[], panneaux: Panneau[]) {
     const [selectedTypeIds, setSelectedTypeIds] = useState<number[]>([]);

@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import { withConnection, withTransaction, getOrCreateUser } from '../db';
-import { processImage } from '../imageUtils';
+import { processImage, deleteProcessedImage } from '../imageUtils';
 import { logAction } from '../logger';
 import { AppError } from '../errors';
 import { SMALL_DIR, ORIGINAL_DIR } from '../config';
@@ -98,32 +98,41 @@ export async function createPanneau(input: CreatePanneauInput): Promise<Panneau>
     // pas la peine de garder une connexion DB occupée pendant le traitement sharp.
     const { fileNameOriginal, fileNameSmall } = await processImage(file);
 
-    const { panneauId, imageId } = await withTransaction(async (conn) => {
-        const authorId = await getOrCreateUser(conn, author);
+    let panneauId: number;
+    let imageId: number;
+    try {
+        ({ panneauId, imageId } = await withTransaction(async (conn) => {
+            const authorId = await getOrCreateUser(conn, author);
 
-        const panneauRes = await conn.query(
-            'INSERT INTO panneaux (lat, lng, comment, author_id) VALUES (?, ?, ?, ?)',
-            [lat, lng, comment, authorId]
-        );
-        const panneauId = panneauRes.insertId;
-
-        for (const tid of typeIds) {
-            await conn.query(
-                'INSERT INTO panneau_types_mapping (panneau_id, type_id) VALUES (?, ?)',
-                [panneauId, tid]
+            const panneauRes = await conn.query(
+                'INSERT INTO panneaux (lat, lng, comment, author_id) VALUES (?, ?, ?, ?)',
+                [lat, lng, comment, authorId]
             );
-        }
+            const panneauId = panneauRes.insertId;
 
-        const imageRes = await conn.query(
-            'INSERT INTO images (fileNameOriginal, fileNameSmall, panneau_id, main_image, author_id) VALUES (?, ?, ?, ?, ?)',
-            [fileNameOriginal, fileNameSmall, panneauId, true, authorId]
-        );
+            for (const tid of typeIds) {
+                await conn.query(
+                    'INSERT INTO panneau_types_mapping (panneau_id, type_id) VALUES (?, ?)',
+                    [panneauId, tid]
+                );
+            }
 
-        return {
-            panneauId: parseInt(panneauId.toString()),
-            imageId: parseInt(imageRes.insertId.toString()),
-        };
-    });
+            const imageRes = await conn.query(
+                'INSERT INTO images (fileNameOriginal, fileNameSmall, panneau_id, main_image, author_id) VALUES (?, ?, ?, ?, ?)',
+                [fileNameOriginal, fileNameSmall, panneauId, true, authorId]
+            );
+
+            return {
+                panneauId: parseInt(panneauId.toString()),
+                imageId: parseInt(imageRes.insertId.toString()),
+            };
+        }));
+    } catch (err) {
+        // L'image a déjà été écrite sur disque à ce stade : si la transaction
+        // échoue, on la supprime pour ne pas laisser de fichiers orphelins.
+        await deleteProcessedImage(fileNameOriginal, fileNameSmall);
+        throw err;
+    }
 
     logAction(`[NEW PANEL] ID: ${panneauId}, Lat: ${lat}, Lng: ${lng}, Author: ${author || 'Anonymous'}, Image: ${fileNameOriginal}, Types: ${typeIds.join(', ')}, IP: ${ip}`);
 
@@ -159,22 +168,28 @@ export async function addPhotoToPanneau(input: AddPhotoInput): Promise<{ imageId
 
     const { fileNameOriginal, fileNameSmall } = await processImage(file);
 
-    const imageId = await withTransaction(async (conn) => {
-        const authorId = await getOrCreateUser(conn, author);
+    let imageId: number;
+    try {
+        imageId = await withTransaction(async (conn) => {
+            const authorId = await getOrCreateUser(conn, author);
 
-        // Le nouvel ajout devient la photo principale du panneau.
-        await conn.query(
-            'UPDATE images SET main_image = false WHERE panneau_id = ? AND main_image = true',
-            [panneauId]
-        );
+            // Le nouvel ajout devient la photo principale du panneau.
+            await conn.query(
+                'UPDATE images SET main_image = false WHERE panneau_id = ? AND main_image = true',
+                [panneauId]
+            );
 
-        const imageRes = await conn.query(
-            'INSERT INTO images (fileNameOriginal, fileNameSmall, panneau_id, main_image, author_id) VALUES (?, ?, ?, ?, ?)',
-            [fileNameOriginal, fileNameSmall, panneauId, true, authorId]
-        );
+            const imageRes = await conn.query(
+                'INSERT INTO images (fileNameOriginal, fileNameSmall, panneau_id, main_image, author_id) VALUES (?, ?, ?, ?, ?)',
+                [fileNameOriginal, fileNameSmall, panneauId, true, authorId]
+            );
 
-        return parseInt(imageRes.insertId.toString());
-    });
+            return parseInt(imageRes.insertId.toString());
+        });
+    } catch (err) {
+        await deleteProcessedImage(fileNameOriginal, fileNameSmall);
+        throw err;
+    }
 
     logAction(`[NEW PHOTO] Panel ID: ${panneauId}, Author: ${author || 'Anonymous'}, Image: ${fileNameOriginal}, IP: ${ip}`);
 

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { User, Calendar, Share2, Check, ImagePlus } from 'lucide-react';
-import type { Panneau, PanelType } from '../../../../backend/src/types';
+import type { Panneau, PanelType } from '@shared/types';
 import { photoUrl } from '../../api/client';
 import { PhotoCarousel } from './PhotoCarousel';
 import AddPanneauModal from '../AddPanneau/AddPanneauModal';

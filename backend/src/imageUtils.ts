@@ -23,18 +23,39 @@ export const processImage = async (file: Express.Multer.File): Promise<Processed
     const originalPath = path.join(ORIGINAL_DIR, originalName);
     const smallPath = path.join(SMALL_DIR, smallName);
 
-    // Save original
-    await fs.move(file.path, originalPath);
+    try {
+        // Save original
+        await fs.move(file.path, originalPath);
 
-    // Generate and save small version
-    await sharp(originalPath)
-        .rotate()
-        .resize(400, 400, { fit: 'outside' })
-        .jpeg({ quality: 80 })
-        .toFile(smallPath);
+        // Generate and save small version
+        await sharp(originalPath)
+            .rotate()
+            .resize(400, 400, { fit: 'outside' })
+            .jpeg({ quality: 80 })
+            .toFile(smallPath);
+    } catch (err) {
+        // Ne laisse rien d'orpheline sur le disque si une des étapes échoue
+        // (ex: image corrompue que sharp n'arrive pas à décoder).
+        await Promise.all([
+            fs.remove(originalPath).catch(() => {}),
+            fs.remove(smallPath).catch(() => {}),
+            fs.remove(file.path).catch(() => {}),
+        ]);
+        throw err;
+    }
 
     return {
         fileNameOriginal: originalName,
         fileNameSmall: smallName
     };
+};
+
+// À appeler si l'image a bien été traitée (processImage a réussi) mais qu'une
+// étape suivante échoue (ex: la transaction DB) — évite de laisser les
+// fichiers déjà écrits sur disque sans ligne en base pour les référencer.
+export const deleteProcessedImage = async (fileNameOriginal: string, fileNameSmall: string): Promise<void> => {
+    await Promise.all([
+        fs.remove(path.join(ORIGINAL_DIR, fileNameOriginal)).catch(() => {}),
+        fs.remove(path.join(SMALL_DIR, fileNameSmall)).catch(() => {}),
+    ]);
 };

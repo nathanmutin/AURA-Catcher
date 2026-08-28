@@ -1,4 +1,4 @@
-import type { Panneau } from '../../../backend/src/types';
+import type { Panneau } from '@shared/types';
 
 /**
  * Calculate distance between two geographic coordinates using Haversine formula

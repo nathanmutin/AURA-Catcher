@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { PanelType } from '../../../../backend/src/types';
+import type { PanelType } from '@shared/types';
 import './TypeFilterDropdown.css';
 
 interface Props {
