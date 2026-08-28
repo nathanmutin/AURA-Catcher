@@ -1,8 +1,10 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { getPool, getOrCreateUser } from './db';
-import multer from 'multer';
 import { processImage } from './imageUtils';
-import { TEMP_DIR, LOGS_DIR, SMALL_DIR, ORIGINAL_DIR } from './config';
+import { uploadSingleImage } from './upload';
+import { parseLatLng, sanitizeComment, sanitizeAuthor, parseTypeIds } from './validation';
+import { LOGS_DIR, SMALL_DIR, ORIGINAL_DIR } from './config';
 import { Panneau } from './types';
 import fs from 'fs';
 import path from 'path';
@@ -10,16 +12,13 @@ import path from 'path';
 
 const router = Router();
 
-// Configure Multer for image uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, TEMP_DIR);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname);
-    }
+// Limits how many panels/photos a single IP can submit, to curb spam.
+const writeLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
 });
-const upload = multer({ storage });
 
 async function logAction(message: string) {
     const timestamp = new Date().toISOString();
@@ -134,16 +133,21 @@ router.get('/panneaux', async (req, res) => {
  * 
  * @returns {Object} The created billboard object with ID and image URL
  */
-router.post('/panneaux', upload.single('image'), async (req, res) => {
+router.post('/panneaux', writeLimiter, uploadSingleImage, async (req, res) => {
     let conn;
     try {
-        const { lat, lng, comment, author, typeId } = req.body;
         const file = req.file;
 
-        if (!file || !lat || !lng) {
-            res.status(400).json({ error: 'Missing required fields' });
+        const coords = parseLatLng(req.body.lat, req.body.lng);
+        const types = parseTypeIds(req.body.typeId);
+        const comment = sanitizeComment(req.body.comment);
+        const author = sanitizeAuthor(req.body.author);
+
+        if (!file || !coords || !types) {
+            res.status(400).json({ error: 'Missing or invalid required fields' });
             return;
         }
+        const { lat, lng } = coords;
 
         // Process image (save original and small versions)
         const { fileNameOriginal, fileNameSmall } = await processImage(file);
@@ -159,7 +163,6 @@ router.post('/panneaux', upload.single('image'), async (req, res) => {
         const panneauId = panneauRes.insertId;
 
         // Insert type mappings
-        const types = Array.isArray(typeId) ? typeId : [typeId || 1];
         for (const tid of types) {
             await conn.query('INSERT INTO panneau_types_mapping (panneau_id, type_id) VALUES (?, ?)',
                 [panneauId, tid]);
@@ -178,13 +181,13 @@ router.post('/panneaux', upload.single('image'), async (req, res) => {
         // Log the action
         logAction(`[NEW PANEL] ID: ${panneauId}, Lat: ${lat}, Lng: ${lng}, Author: ${author || 'Anonymous'}, Image: ${fileNameOriginal}, Types: ${types.join(', ')}, IP: ${req.ip || 'unknown'}`);
 
-        res.status(201).json({ 
-            id: parseInt(panneauId.toString()), 
-            lat, 
-            lng, 
+        res.status(201).json({
+            id: parseInt(panneauId.toString()),
+            lat,
+            lng,
             imageIds: [imageId],
-            comment, 
-            author: author || null, 
+            comment,
+            author: author || null,
             typeIds: types
         });
 
@@ -329,11 +332,11 @@ router.get('/photo/:id', async (req, res) => {
  * 
  * @returns {Object} The new image id and success message
  */
-router.post('/panneaux/:id/photos', upload.single('image'), async (req, res) => {
+router.post('/panneaux/:id/photos', writeLimiter, uploadSingleImage, async (req, res) => {
     let conn;
     try {
         const { id } = req.params;
-        const { author } = req.body;
+        const author = sanitizeAuthor(req.body.author);
         const file = req.file;
 
         if (!file) {

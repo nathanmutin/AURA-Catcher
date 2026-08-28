@@ -87,7 +87,7 @@ const AddPanneauModal: React.FC<Props> = ({
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const originalFile = e.target.files[0];
-            let fileToUpload = await handleHEIC(originalFile);
+            const fileToUpload = await handleHEIC(originalFile);
 
             setFile(fileToUpload);
             setPreview(URL.createObjectURL(fileToUpload));

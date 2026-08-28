@@ -4,9 +4,9 @@ import fs from 'fs';
 import routes from './routes';
 import { initDb } from './db';
 import { LOGS_DIR, PHOTOS_DIR, TEMP_DIR, ORIGINAL_DIR, SMALL_DIR } from './config';
-import path from 'path';
 
 import compression from 'compression';
+import helmet from 'helmet';
 
 /**
  * Main application entry point.
@@ -27,6 +27,9 @@ app.get('/', (req, res) => {
     res.send('AURA Catcher Backend is running.');
 });
 
+// Helmet ajoute plusieurs en-têtes HTTP de sécurité (anti-clickjacking,
+// anti-sniffing MIME, etc.) pour durcir les réponses du serveur par défaut.
+app.use(helmet());
 app.use(compression());
 app.use(express.json());
 app.use('/api', routes);

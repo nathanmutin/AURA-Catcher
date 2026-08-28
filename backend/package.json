@@ -15,10 +15,12 @@
     "compression": "^1.7.4",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.6.2",
     "fs-extra": "^11.3.3",
+    "helmet": "^8.3.0",
     "mariadb": "^3.4.5",
     "multer": "^2.0.2",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.4",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
   },

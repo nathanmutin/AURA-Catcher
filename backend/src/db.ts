@@ -19,7 +19,6 @@ export const initDb = async () => {
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
         username VARCHAR(255) NOT NULL UNIQUE,
-        password VARCHAR(255) NOT NULL,
         email VARCHAR(255),
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
       )
@@ -104,7 +103,7 @@ export const getPool = () => {
   return pool;
 };
 
-export const getOrCreateUser = async (conn: mariadb.Connection, username: string): Promise<number | null> => {
+export const getOrCreateUser = async (conn: mariadb.Connection, username: string | undefined): Promise<number | null> => {
   if (!username || typeof username !== 'string' || username.trim() === '') {
     return null; // Return null for invalid usernames
   }
@@ -119,8 +118,8 @@ export const getOrCreateUser = async (conn: mariadb.Connection, username: string
   
   // Create user if doesn't exist
   const userRes = await conn.query(
-    'INSERT INTO users (username, password) VALUES (?, ?)',
-    [trimmedUsername, 'placeholder_password']
+    'INSERT INTO users (username) VALUES (?)',
+    [trimmedUsername]
   );
   return parseInt(userRes.insertId.toString());
 };
