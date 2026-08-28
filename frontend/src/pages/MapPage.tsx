@@ -14,6 +14,8 @@ import { Plus } from 'lucide-react';
 import AddPanneauModal from '../components/AddPanneau/AddPanneauModal.tsx';
 import PickedLocationMarker from '../components/AddPanneau/PickedLocationMarker.tsx';
 import { PanneauMarker } from '../components/Marker/PanneauMarker.tsx';
+import TypeFilterDropdown from '../components/Map/TypeFilterDropdown.tsx';
+import { usePanelFilters } from '../components/Map/usePanelFilters.ts';
 import './MapPage.css';
 
 // Fix for default marker icon
@@ -72,10 +74,7 @@ const MapPage: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isPickingLocation, setIsPickingLocation] = useState(false);
     const [pickedLocation, setPickedLocation] = useState<{ lat: number; lng: number } | null>(null);
-    const [selectedTypeIds, setSelectedTypeIds] = useState<number[]>([]);
-    const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-    const [hasInitializedFilter, setHasInitializedFilter] = useState(false);
     const locationSelectionTimerRef = useRef<number | null>(null);
 
     useEffect(() => {
@@ -86,12 +85,7 @@ const MapPage: React.FC = () => {
         };
     }, []);
 
-    useEffect(() => {
-        if (types.length > 0 && !hasInitializedFilter) {
-            setSelectedTypeIds(types.map(t => t.id));
-            setHasInitializedFilter(true);
-        }
-    }, [types, hasInitializedFilter]);
+    const { selectedTypeIds, toggleType, toggleAllTypes, filteredPanneaux } = usePanelFilters(types, panneaux);
 
     const handleMapClick = (latlng: L.LatLng) => {
         setPickedLocation({ lat: latlng.lat, lng: latlng.lng });
@@ -117,71 +111,18 @@ const MapPage: React.FC = () => {
         // Could add toast here
     };
 
-    const toggleType = (id: number) => {
-        setSelectedTypeIds(prev =>
-            prev.includes(id)
-                ? prev.filter(tId => tId !== id)
-                : [...prev, id]
-        );
-    };
-
-    const toggleAllTypes = () => {
-        if (selectedTypeIds.length === types.length) {
-            setSelectedTypeIds([]); // deselect all
-        } else {
-            setSelectedTypeIds(types.map(t => t.id)); // select all
-        }
-    };
-
-    // Panneaux dont les types correspondent aux types sélectionnés
-    const filteredPanneaux = panneaux.filter(p => p.typeIds.some(tid => selectedTypeIds.includes(tid)));
     // Récupération de l'ID du panneau sélectionné depuis les paramètres de l'URL
     // pour l'ouvrir automatiquement
     const selectedPanneauId = searchParams.get('panneauId') ? Number(searchParams.get('panneauId')) : null;
 
     return (
         <div className="map-page">
-            <div className="map-filter-container">
-                <button
-                    className="filter-toggle-btn"
-                    onClick={() => setIsFilterOpen(!isFilterOpen)}
-                >
-                    Filtres ({selectedTypeIds.length === types.length ? 'Tous' : selectedTypeIds.length})
-                </button>
-
-                {isFilterOpen && (
-                    <div className="filter-dropdown">
-                        <div
-                            className="filter-dropdown-item select-all-item"
-                            onClick={toggleAllTypes}
-                        >
-                            <input
-                                type="checkbox"
-                                checked={selectedTypeIds.length === types.length}
-                                readOnly
-                            />
-                            <strong>Tout sélectionner</strong>
-                        </div>
-                        {types.map(t => {
-                            const isActive = selectedTypeIds.includes(t.id);
-                            return (
-                                <div
-                                    key={t.id}
-                                    className="filter-dropdown-item"
-                                    onClick={() => toggleType(t.id)}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={isActive}
-                                        readOnly
-                                    />
-                                    <span>{t.name}</span>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
-            </div>
+            <TypeFilterDropdown
+                types={types}
+                selectedTypeIds={selectedTypeIds}
+                onToggleType={toggleType}
+                onToggleAll={toggleAllTypes}
+            />
             <MapContainer
                 center={[45.75, 4.85]}
                 zoom={7}

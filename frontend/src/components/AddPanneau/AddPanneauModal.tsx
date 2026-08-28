@@ -1,15 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import React from 'react';
 import { Camera, MapPin, X } from 'lucide-react';
-import { handleHEIC, getGPSFromImage } from '../../utils/photos';
-import { createPanneau, fetchTypes, uploadPhotoToPanel } from '../../api/client';
-import { STORAGE_KEYS } from '../../utils/constants';
-import { getNearbyPanels } from '../../utils/distanceUtils';
 import type { Panneau } from '../../../../backend/src/types';
+import { useAddPanneauForm, type ModalMode } from './useAddPanneauForm';
 import NearbyPanelsDialog from './NearbyPanelsDialog';
 import './AddPanneauModal.css';
-
-type ModalMode = 'create' | 'addPhoto' | 'nearbySelection';
 
 interface Props {
     isOpen: boolean;
@@ -24,203 +18,59 @@ interface Props {
     panneaux?: Panneau[];
 }
 
-const AddPanneauModal: React.FC<Props> = ({ 
-    isOpen, 
-    onClose, 
+const AddPanneauModal: React.FC<Props> = ({
+    isOpen,
+    onClose,
     onPickLocation,
     pickedLocation,
     setPickedLocation,
     onResetLocation,
-    onSuccess, 
+    onSuccess,
     mode = 'create',
     panneauId,
     panneaux = []
 }) => {
-    const [modeInternal, setModeInternal] = useState<ModalMode>(mode);
-    const [panneauIdInternal, setPanneauIdInternal] = useState<number | undefined>(panneauId);
-    const [file, setFile] = useState<File | null>(null);
-    const [preview, setPreview] = useState<string | null>(null);
-    const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-    const [comment, setComment] = useState('');
-    const [author, setAuthor] = useState('');
-    const [typeIds, setTypeIds] = useState<number[]>([]);
-    const [isAddingType, setIsAddingType] = useState(false);
-    const [skipNearbyCheck, setSkipNearbyCheck] = useState(false);
-    const [nearbyPanels, setNearbyPanels] = useState<Array<Panneau & { distance: number }>>([]);
-
-
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const queryClient = useQueryClient();
-
-    const { data: types = [] } = useQuery({ queryKey: ['types'], queryFn: fetchTypes, enabled: isOpen && modeInternal === 'create' });
-
-    useEffect(() => {
-        if (isOpen) {
-            const savedAuthor = localStorage.getItem(STORAGE_KEYS.LAST_AUTHOR);
-            if (savedAuthor) {
-                setAuthor(savedAuthor);
-            }
-        }
-    }, [isOpen]);
-
-    useEffect(() => {
-        if (pickedLocation) {
-            setLocation(pickedLocation);
-        }
-    }, [pickedLocation]);
-
-    // Check for nearby panels when location is updated
-    useEffect(() => {
-        if (modeInternal === 'create' && location && panneaux.length > 0 && !skipNearbyCheck) {
-            const nearby = getNearbyPanels(location, panneaux);
-            if (nearby.length > 0) {
-                setNearbyPanels(nearby);
-                setModeInternal('nearbySelection');
-            } else {
-                // Clear nearby panels if none found
-                setNearbyPanels([]);
-                setModeInternal('create');
-            }
-        }
-    }, [location, modeInternal, panneaux, skipNearbyCheck]);
-
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const originalFile = e.target.files[0];
-            const fileToUpload = await handleHEIC(originalFile);
-
-            setFile(fileToUpload);
-            setPreview(URL.createObjectURL(fileToUpload));
-
-            // Only extract GPS for create mode
-            if (modeInternal === 'create') {
-                // Use original file for GPS to preserve EXIF data
-                const gps = await getGPSFromImage(originalFile);
-                if (gps) {
-                    setLocation(gps);
-                    if (setPickedLocation) {
-                        setPickedLocation(gps);
-                    }
-                }
-            }
-        }
-    };
-
-    const createPanneauMutation = useMutation({
-        mutationFn: (formData: FormData) => createPanneau(formData),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['panneaux'] });
-            queryClient.invalidateQueries({ queryKey: ['stats'] });
-            queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
-            onSuccess();
-            handleClose();
-        },
-        onError: (err) => {
-            console.error(err);
-            alert('Erreur lors de l\'envoi');
-        }
+    const {
+        flow,
+        file,
+        preview,
+        comment,
+        setComment,
+        author,
+        setAuthor,
+        typeIds,
+        addType,
+        removeType,
+        isAddingType,
+        setIsAddingType,
+        types,
+        isPhotoMode,
+        isLoading,
+        fileInputRef,
+        handleFileChange,
+        handleSubmit,
+        handleClose,
+        handleAddPhotoToExisting,
+        handleCreateNewAnyway,
+        handlePickDifferentLocation,
+    } = useAddPanneauForm({
+        isOpen,
+        mode,
+        panneauId,
+        panneaux,
+        pickedLocation,
+        setPickedLocation,
+        onPickLocation,
+        onResetLocation,
+        onSuccess,
+        onClose,
     });
-
-    const uploadPhotoMutation = useMutation({
-        mutationFn: (formData: FormData) => {
-            if (!panneauIdInternal) throw new Error('Panel ID required');
-            return uploadPhotoToPanel(panneauIdInternal, formData);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['panneaux'] });
-            onSuccess();
-            handleClose();
-        },
-        onError: (err) => {
-            console.error(err);
-            alert('Erreur lors de l\'envoi');
-        }
-    });
-
-    const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        
-        if (modeInternal === 'addPhoto') {
-            if (!file) return;
-
-            const formData = new FormData();
-            formData.append('image', file);
-            if (author) {
-                formData.append('author', author);
-                localStorage.setItem(STORAGE_KEYS.LAST_AUTHOR, author);
-            }
-
-            uploadPhotoMutation.mutate(formData);
-        } else {
-            // modeInternal === 'create'
-            if (!file || !location) return;
-
-            // No nearby panels, proceed with creation
-            const formData = new FormData();
-            formData.append('image', file);
-            formData.append('lat', location.lat.toString());
-            formData.append('lng', location.lng.toString());
-            formData.append('comment', comment);
-            if (author) {
-                formData.append('author', author);
-                localStorage.setItem(STORAGE_KEYS.LAST_AUTHOR, author);
-            }
-            typeIds.forEach(tid => {
-                formData.append('typeId', tid.toString());
-            });
-
-            createPanneauMutation.mutate(formData);
-        }
-    };
-
-    const handleClose = () => {
-        setModeInternal(mode);
-        setPanneauIdInternal(panneauId);
-        setFile(null);
-        setPreview(null);
-        setLocation(null);
-        setComment('');
-        setSkipNearbyCheck(false);
-        setNearbyPanels([]);
-        setTypeIds([]);
-        onResetLocation?.();
-        onClose();
-    };
-
-    const handleAddPhotoToExisting = (selectedPanneauId: number) => {
-        // Close nearby dialog
-        setLocation(null);
-        setNearbyPanels([]);
-        setModeInternal('addPhoto');
-        setPanneauIdInternal(selectedPanneauId);
-    };
-
-    const handleCreateNewAnyway = () => {
-        // Close nearby dialog and continue with form
-        setNearbyPanels([]);
-        setSkipNearbyCheck(true);
-        setModeInternal('create');
-        // Keep location and file, user can now submit form
-    };
-
-    const handlePickDifferentLocation = () => {
-        // Close dialog and clear location, user can pick again
-        setLocation(null);
-        setNearbyPanels([]);
-        setSkipNearbyCheck(false);
-        setModeInternal('create');
-        // Trigger location picker
-        onPickLocation?.();
-    };
 
     if (!isOpen) return null;
 
-    const isLoading = modeInternal === 'create' ? createPanneauMutation.isPending : uploadPhotoMutation.isPending;
-    const isPhotoMode = modeInternal === 'addPhoto';
-
     return (
         <>
-            {modeInternal !== 'nearbySelection' && (
+            {flow.mode !== 'nearbySelection' && (
             <div className="modal-overlay">
                 <div className="modal-card">
                     <button className="close-btn" onClick={handleClose}><X /></button>
@@ -251,10 +101,10 @@ const AddPanneauModal: React.FC<Props> = ({
                         {!isPhotoMode && (
                             <div className="location-section">
                                 <div className="location-status">
-                                    <MapPin size={20} className={location ? 'text-green' : 'text-gray'} />
+                                    <MapPin size={20} className={flow.location ? 'text-green' : 'text-gray'} />
                                     <span>
-                                        {location
-                                            ? `Localisé : ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`
+                                        {flow.location
+                                            ? `Localisé : ${flow.location.lat.toFixed(4)}, ${flow.location.lng.toFixed(4)}`
                                             : 'Position manquante'}
                                     </span>
                                 </div>
@@ -291,7 +141,7 @@ const AddPanneauModal: React.FC<Props> = ({
                                         return type ? (
                                             <span key={type.id} className="type-badge">
                                                 {type.name}
-                                                <button type="button" onClick={() => setTypeIds(prev => prev.filter(id => id !== type.id))}>
+                                                <button type="button" onClick={() => removeType(type.id)}>
                                                     <X size={14} />
                                                 </button>
                                             </span>
@@ -313,7 +163,7 @@ const AddPanneauModal: React.FC<Props> = ({
                                                         onMouseDown={e => {
                                                             // prevent blur before click
                                                             e.preventDefault();
-                                                            setTypeIds(prev => [...prev, t.id]);
+                                                            addType(t.id);
                                                             setIsAddingType(false);
                                                         }}
                                                     >
@@ -349,7 +199,7 @@ const AddPanneauModal: React.FC<Props> = ({
                         <button
                             type="submit"
                             className="btn-primary w-full"
-                            disabled={isPhotoMode ? !file || isLoading : (!file || !location || isLoading)}
+                            disabled={isPhotoMode ? !file || isLoading : (!file || !flow.location || isLoading)}
                         >
                             {isLoading ? 'Envoi...' : (isPhotoMode ? 'Ajouter la photo' : 'Envoyer')}
                         </button>
@@ -359,12 +209,12 @@ const AddPanneauModal: React.FC<Props> = ({
             )}
 
             <NearbyPanelsDialog
-                nearbyPanels={nearbyPanels}
+                nearbyPanels={flow.nearbyPanels}
                 onAddPhoto={handleAddPhotoToExisting}
                 onCreateNew={handleCreateNewAnyway}
                 onPickDifferentLocation={handlePickDifferentLocation}
                 onClose={handleClose}
-                isOpen={modeInternal === 'nearbySelection' && nearbyPanels.length > 0}
+                isOpen={flow.mode === 'nearbySelection' && flow.nearbyPanels.length > 0}
             />
         </>
     );
