@@ -3,6 +3,7 @@ import express from 'express';
 import fs from 'fs';
 import routes from './routes';
 import { initDb } from './db';
+import { errorHandler } from './errors';
 import { LOGS_DIR, PHOTOS_DIR, TEMP_DIR, ORIGINAL_DIR, SMALL_DIR } from './config';
 
 import compression from 'compression';
@@ -33,6 +34,10 @@ app.use(helmet());
 app.use(compression());
 app.use(express.json());
 app.use('/api', routes);
+
+// Doit rester après le montage des routes : Express reconnaît un middleware
+// à 4 paramètres comme gestionnaire d'erreurs et l'appelle via next(err).
+app.use(errorHandler);
 
 initDb().then(() => {
     app.listen(PORT, () => {

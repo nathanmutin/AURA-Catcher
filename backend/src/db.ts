@@ -99,9 +99,32 @@ export const initDb = async () => {
   }
 };
 
-export const getPool = () => {
-  return pool;
-};
+// Acquiert une connexion, exécute fn, puis la relâche systématiquement
+// (même en cas d'erreur) — évite de répéter ce pattern dans chaque service.
+export async function withConnection<T>(fn: (conn: mariadb.Connection) => Promise<T>): Promise<T> {
+  const conn = await pool.getConnection();
+  try {
+    return await fn(conn);
+  } finally {
+    conn.release();
+  }
+}
+
+// Comme withConnection, mais englobe fn dans une transaction : commit si fn
+// réussit, rollback automatique si elle lève une erreur.
+export async function withTransaction<T>(fn: (conn: mariadb.Connection) => Promise<T>): Promise<T> {
+  return withConnection(async (conn) => {
+    await conn.beginTransaction();
+    try {
+      const result = await fn(conn);
+      await conn.commit();
+      return result;
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    }
+  });
+}
 
 export const getOrCreateUser = async (conn: mariadb.Connection, username: string | undefined): Promise<number | null> => {
   if (!username || typeof username !== 'string' || username.trim() === '') {
