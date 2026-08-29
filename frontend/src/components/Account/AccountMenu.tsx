@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User, X } from 'lucide-react';
 import { useIdentity, describeIdentityError } from '../../hooks/useIdentity';
+import { STORAGE_KEYS } from '../../utils/constants';
 import './AccountMenu.css';
 
 type PanelView = 'closed' | 'menu' | 'claim' | 'claimSent' | 'rename';
@@ -30,9 +31,18 @@ const AccountMenu: React.FC = () => {
 
     const openClaim = () => {
         setErrorMsg('');
-        setPseudo('');
         setEmail('');
         setView('claim');
+
+        // Préremplit avec le dernier pseudo utilisé (localStorage) seulement
+        // à la création initiale d'un compte, pas quand on clique "Protéger
+        // un autre pseudo" pour changer de compte — dans ce second cas, la
+        // valeur en cache serait très probablement le pseudo déjà vérifié.
+        // Pas de vérification de disponibilité ici : revérifier un pseudo
+        // qu'on possède déjà (ex: sur un nouvel appareil) est un cas d'usage
+        // légitime, pas une usurpation — le backend l'autorise déjà tant que
+        // l'email fourni correspond à celui déjà enregistré.
+        setPseudo(username ? '' : localStorage.getItem(STORAGE_KEYS.LAST_AUTHOR) ?? '');
     };
 
     const openRename = () => {
