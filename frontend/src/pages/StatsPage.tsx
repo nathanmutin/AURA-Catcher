@@ -1,30 +1,17 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import './StatsPage.css';
-import { fetchGlobalStats, fetchLeaderboard, fetchPanneaux, fetchTypes, photoUrl } from '../api/client';
-
-
-const ITEMS_PER_PAGE = 10;
+import { fetchGlobalStats, fetchLeaderboard } from '../api/client';
 
 const StatsPage: React.FC = () => {
-    const navigate = useNavigate();
-    const [currentPage, setCurrentPage] = useState(1);
-
     const { data: globalStats, isLoading: isLoadingStats } = useQuery({ queryKey: ['stats'], queryFn: fetchGlobalStats });
     const { data: leaderboard = [], isLoading: isLoadingLeaderboard } = useQuery({ queryKey: ['leaderboard'], queryFn: fetchLeaderboard });
-    const { data: panneaux = [], isLoading: isLoadingPanneaux } = useQuery({ queryKey: ['panneaux'], queryFn: fetchPanneaux });
-    const { data: types = [], isLoading: isLoadingTypes } = useQuery({ queryKey: ['types'], queryFn: fetchTypes });
 
-    const loading = isLoadingStats || isLoadingLeaderboard || isLoadingPanneaux || isLoadingTypes;
+    const loading = isLoadingStats || isLoadingLeaderboard;
 
     if (loading) {
         return <div className="stats-container">Chargement...</div>;
     }
-
-    const totalPages = Math.max(1, Math.ceil(panneaux.length / ITEMS_PER_PAGE));
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const currentPanneaux = panneaux.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
     return (
         <div className="stats-container">
@@ -67,69 +54,6 @@ const StatsPage: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
-            </div>
-
-            <div className="stats-section">
-                <h2 className="section-title">Derniers panneaux</h2>
-                <div className="table-container">
-                    <table className="data-table">
-                        <thead>
-                            <tr>
-                                <th>Image</th>
-                                <th>Date</th>
-                                <th>Auteur</th>
-                                <th>Types</th>
-                                <th>Commentaire</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {currentPanneaux.map((p) => {
-                                const date = new Date(p.createdAt).toLocaleDateString();
-                                const typeNames = p.typeIds.map(typeId => types.find(t => t.id === typeId)?.name).filter((v): v is string => !!v).join(', ') || 'Inconnu';
-                                return (
-                                    <tr
-                                        key={p.id}
-                                        className="clickable-row data-row"
-                                        onClick={() => navigate(`/?panneauId=${p.id}`)}
-                                        title={`Panneau n°${p.id} - Cliquez pour voir sur la carte`}
-                                    >
-                                        <td>
-                                            {p.imageIds.length > 0 ? (
-                                                <img src={photoUrl(p.imageIds[0])} alt="Panel" className="panel-thumb" />
-                                            ) : (
-                                                <div className="panel-thumb panel-thumb--empty" />
-                                            )}
-                                        </td>
-                                        <td>{date}</td>
-                                        <td>{p.author || 'Anonyme'}</td>
-                                        <td>{typeNames}</td>
-                                        <td>{p.comment || '-'}</td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
-
-                {totalPages > 1 && (
-                    <div className="pagination-controls">
-                        <button
-                            className="btn-pagination"
-                            disabled={currentPage === 1}
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        >
-                            Précédent
-                        </button>
-                        <span className="pagination-info">Page {currentPage} sur {totalPages}</span>
-                        <button
-                            className="btn-pagination"
-                            disabled={currentPage === totalPages}
-                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        >
-                            Suivant
-                        </button>
-                    </div>
-                )}
             </div>
         </div>
     );

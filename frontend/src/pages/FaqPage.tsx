@@ -1,6 +1,6 @@
 import React from 'react';
 import { SiGithub } from '@icons-pack/react-simple-icons';
-import { Mail } from 'lucide-react';
+import { Mail, Rss } from 'lucide-react';
 import supervilleImage from '../assets/faq/superville.webp';
 import appart1Image from '../assets/faq/radio.webp';
 import appart2Image from '../assets/faq/chiottard.webp';
@@ -65,6 +65,17 @@ const FaqPage: React.FC = () => {
                         <a href="https://github.com/nathanmutin/AURA-Catcher" target="_blank" rel="noopener noreferrer" className="github-button">
                             <SiGithub size={24} style={{ marginRight: '10px' }} />
                             Voir sur GitHub
+                        </a>
+                    </div>
+
+                    <h2>Suivre l'activité du site</h2>
+                    <p style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                        Un flux RSS liste les derniers panneaux, photos et contributeurs ajoutés sur le site.
+                    </p>
+                    <div style={{ textAlign: 'center', margin: '1rem 0 2.5rem 0' }}>
+                        <a href="/api/feed.rss" className="contact-button">
+                            <Rss size={24} style={{ marginRight: '10px' }} />
+                            Flux RSS
                         </a>
                     </div>
 
