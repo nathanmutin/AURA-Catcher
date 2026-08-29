@@ -29,6 +29,11 @@ export async function requestVerification(username: string, email: string, ip: s
     // l'insertion du token doit être annulée elle aussi (pas de token orphelin
     // qui ne sera jamais utilisable).
     await withTransaction(async (conn) => {
+        // Balaie au passage les demandes expirées et jamais cliquées : la
+        // plupart des liens ne sont jamais ouverts, donc sans ça la table
+        // grossirait indéfiniment sans qu'aucun autre code n'y touche jamais.
+        await conn.query('DELETE FROM email_verifications WHERE expiresAt < NOW()');
+
         const rows = await conn.query('SELECT email FROM users WHERE username = ?', [username]);
         const existingEmail: string | null = rows[0]?.email ?? null;
 
@@ -59,21 +64,25 @@ export async function requestVerification(username: string, email: string, ip: s
 export async function verifyToken(rawToken: string): Promise<{ username: string; deviceToken: string }> {
     const tokenHash = hashToken(rawToken);
 
-    return withTransaction(async (conn) => {
+    // Recherche + suppression du token à usage unique, volontairement HORS
+    // de la transaction ci-dessous
+    const verification = await withConnection(async (conn) => {
         const rows = await conn.query(
             'SELECT id, username, email, expiresAt FROM email_verifications WHERE tokenHash = ?',
             [tokenHash]
         );
-        const verification = rows[0];
-
-        if (!verification || new Date(verification.expiresAt).getTime() < Date.now()) {
-            throw new AppError(400, 'Ce lien de vérification est invalide ou a expiré.');
+        const row = rows[0];
+        if (row) {
+            await conn.query('DELETE FROM email_verifications WHERE id = ?', [row.id]);
         }
+        return row;
+    });
 
-        // Token à usage unique : on le supprime immédiatement, qu'il soit
-        // valide ou non, pour empêcher toute réutilisation.
-        await conn.query('DELETE FROM email_verifications WHERE id = ?', [verification.id]);
+    if (!verification || new Date(verification.expiresAt).getTime() < Date.now()) {
+        throw new AppError(400, 'Ce lien de vérification est invalide ou a expiré.');
+    }
 
+    return withTransaction(async (conn) => {
         const userId = await getOrCreateUser(conn, verification.username);
         if (userId === null) {
             throw new AppError(400, 'Pseudo invalide.');
