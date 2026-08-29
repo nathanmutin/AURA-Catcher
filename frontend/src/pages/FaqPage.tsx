@@ -1,5 +1,5 @@
 import React from 'react';
-import { SiGithub } from '@icons-pack/react-simple-icons';
+import { SiGithub, SiWhatsapp } from '@icons-pack/react-simple-icons';
 import { Mail, Rss } from 'lucide-react';
 import supervilleImage from '../assets/faq/superville.webp';
 import appart1Image from '../assets/faq/radio.webp';
@@ -16,13 +16,18 @@ const FaqPage: React.FC = () => {
                     <h1>À propos d'AURA Catcher</h1>
 
                     <h2>Nous contacter</h2>
-                    <p style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                        Pour toute question, suggestion ou signalement, n'hésitez pas à nous envoyer un message :
+                    <p style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+                        Pour toute question, suggestion ou signalement, n'hésitez pas à nous envoyer un message.
+                        Si tu veux juste traîner avec d'autres chasseurs de panneaux, partager tes plus belles trouvailles entre passionnés, le groupe WhatsApp est fait pour toi.
                     </p>
-                    <div style={{ textAlign: 'center', margin: '1rem 0 2.5rem 0' }}>
-                        <a href="mailto:contact@aura.nitum.fr" className="contact-button">
+                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1rem', margin: '1rem 0 2.5rem 0' }}>
+                        <a href="mailto:contact@aura.nitum.fr" className="contact-button contact-button--email">
                             <Mail size={24} style={{ marginRight: '10px' }} />
                             contact@aura.nitum.fr
+                        </a>
+                        <a href="https://chat.whatsapp.com/KwSXNjGhSJ5BkzgSqcHnSP" target="_blank" rel="noopener noreferrer" className="contact-button contact-button--whatsapp">
+                            <SiWhatsapp size={24} style={{ marginRight: '10px' }} />
+                            Rejoindre le groupe WhatsApp
                         </a>
                     </div>
 

@@ -267,6 +267,31 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
+.contact-button--email {
+    background-color: #1a1a1a;
+    border-color: #1a1a1a;
+    color: #fff;
+}
+
+.contact-button--email:hover {
+    background-color: #000;
+    border-color: #000;
+    color: #fff !important;
+}
+
+/* Vert de marque WhatsApp */
+.contact-button--whatsapp {
+    background-color: #25d366;
+    border-color: #25d366;
+    color: #fff;
+}
+
+.contact-button--whatsapp:hover {
+    background-color: #1ebe5a;
+    border-color: #1ebe5a;
+    color: #fff !important;
+}
+
 /* Dark mode adjustments (si applicable GLOBALEMENT) */
 @media (prefers-color-scheme: dark) {
     /* Si l'app gère le dark mode via CSS natif, sinon ajustez selon vos classes */
