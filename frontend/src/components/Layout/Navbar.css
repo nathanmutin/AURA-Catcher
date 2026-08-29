@@ -28,10 +28,17 @@
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--glass-border);
     align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
+    justify-content: space-between;
+    padding: 0 1rem;
+    box-sizing: border-box;
     z-index: 2000;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.mobile-header-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .mobile-header .logo-img {

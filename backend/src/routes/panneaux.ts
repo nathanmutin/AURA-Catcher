@@ -4,6 +4,7 @@ import { uploadSingleImage } from '../upload';
 import { writeLimiter } from '../rateLimit';
 import { parseLatLng, sanitizeComment, sanitizeAuthor, parseTypeIds } from '../validation';
 import { listPanneaux, createPanneau } from '../services/panneauxService';
+import { resolveAuthor, DEVICE_TOKEN_COOKIE } from '../services/authService';
 
 const router = Router();
 
@@ -33,12 +34,17 @@ router.post('/panneaux', writeLimiter, uploadSingleImage, asyncHandler(async (re
     const coords = parseLatLng(req.body.lat, req.body.lng);
     const typeIds = parseTypeIds(req.body.typeId);
     const comment = sanitizeComment(req.body.comment);
-    const author = sanitizeAuthor(req.body.author);
+    const requestedAuthor = sanitizeAuthor(req.body.author);
 
     if (!file || !coords || !typeIds) {
         res.status(400).json({ error: 'Champs requis manquants ou invalides' });
         return;
     }
+
+    // Refuse seulement si le pseudo demandé est protégé par quelqu'un
+    // d'autre — sinon, pseudo libre ou pseudo vérifié de l'appareil, les
+    // deux sont acceptés (voir authService.resolveAuthor).
+    const author = await resolveAuthor(req.cookies?.[DEVICE_TOKEN_COOKIE], requestedAuthor);
 
     const panneau = await createPanneau({
         file,

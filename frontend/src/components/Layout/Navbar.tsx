@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Map, SquarePen, BarChart, CircleQuestionMark } from 'lucide-react';
+import AccountMenu from '../Account/AccountMenu';
 import './Navbar.css';
 
 import iconSvg from '../../assets/icons/favicon.svg';
@@ -10,8 +11,11 @@ const Navbar: React.FC = () => {
         <>
             {/* Mobile Header (Logo) */}
             <div className="mobile-header">
-                <img src={iconSvg} alt="Logo" className="logo-img" />
-                <span className="logo-text">AURA Catcher</span>
+                <div className="mobile-header-logo">
+                    <img src={iconSvg} alt="Logo" className="logo-img" />
+                    <span className="logo-text">AURA Catcher</span>
+                </div>
+                <AccountMenu />
             </div>
 
             {/* Mobile Bottom Bar */}
@@ -54,6 +58,7 @@ const Navbar: React.FC = () => {
                         FAQ
                     </NavLink>
                 </div>
+                <AccountMenu />
             </nav>
         </>
     );

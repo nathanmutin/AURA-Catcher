@@ -1,0 +1,160 @@
+.account-menu {
+    position: relative;
+}
+
+.account-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 10px;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    max-width: 160px;
+}
+
+.account-toggle-btn span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-toggle-btn:hover {
+    background: #e2e8f0;
+}
+
+.account-dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.15);
+    padding: 0.85rem;
+    min-width: 240px;
+    z-index: 3000;
+}
+
+.account-close-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #64748b;
+}
+
+.account-current {
+    font-weight: 700;
+    color: #166534;
+    padding: 0.25rem 0.25rem 0.6rem;
+    margin-right: 1.5rem;
+}
+
+.account-action {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 0.5rem 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.account-action:hover {
+    background: #f0f9ff;
+    color: var(--aura-blue, #008ecf);
+}
+
+.account-logout {
+    color: #dc2626;
+}
+
+.account-logout:hover {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.account-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding-top: 0.5rem;
+}
+
+.account-form-hint {
+    margin: 0 0 0.25rem;
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.account-form label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.account-form input {
+    padding: 0.5rem 0.7rem;
+    border: 2px solid transparent;
+    background: #f1f5f9;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.account-form input:focus {
+    border-color: var(--aura-blue, #008ecf);
+    background-color: white;
+}
+
+.account-submit-btn {
+    margin-top: 0.25rem;
+    background: var(--aura-blue, #008ecf);
+    border: none;
+    color: white;
+    padding: 0.5rem 0.8rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.account-submit-btn:disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+}
+
+.account-error {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #dc2626;
+}
+
+.account-sent {
+    margin: 0.5rem 0 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #0369a1;
+    padding-top: 0.5rem;
+}

@@ -8,6 +8,7 @@ import { LOGS_DIR, PHOTOS_DIR, TEMP_DIR, ORIGINAL_DIR, SMALL_DIR } from './confi
 
 import compression from 'compression';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 
 /**
  * Main application entry point.
@@ -33,6 +34,9 @@ app.get('/', (req, res) => {
 app.use(helmet());
 app.use(compression());
 app.use(express.json());
+// Nécessaire pour lire req.cookies (le token d'appareil) — Express ne parse
+// pas l'en-tête Cookie par défaut.
+app.use(cookieParser());
 app.use('/api', routes);
 
 // Doit rester après le montage des routes : Express reconnaît un middleware

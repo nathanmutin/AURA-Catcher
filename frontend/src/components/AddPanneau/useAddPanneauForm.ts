@@ -4,6 +4,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { handleHEIC, getGPSFromImage } from '../../utils/photos';
 import { createPanneau, fetchTypes, uploadPhotoToPanel } from '../../api/client';
 import { ApiError } from '../../api/apiClient';
+import { useIdentity } from '../../hooks/useIdentity';
 import { STORAGE_KEYS } from '../../utils/constants';
 import { getNearbyPanels } from '../../utils/distanceUtils';
 import type { Panneau } from '@shared/types';
@@ -111,14 +112,27 @@ export function useAddPanneauForm({
         enabled: isOpen && flow.mode === 'create',
     });
 
+    // Le pseudo vérifié de l'appareil (géré depuis le menu Compte, voir
+    // hooks/useIdentity) sert de valeur par défaut pour l'auteur, mais le
+    // champ reste librement modifiable : on peut poster sous un autre pseudo
+    // libre pour un panneau donné sans se déconnecter (voir authService.
+    // resolveAuthor côté backend, qui n'autorise que ça — pas l'usurpation
+    // d'un pseudo déjà protégé par quelqu'un d'autre).
+    const { username: verifiedUsername } = useIdentity();
+
     useEffect(() => {
-        if (isOpen) {
-            const savedAuthor = localStorage.getItem(STORAGE_KEYS.LAST_AUTHOR);
-            if (savedAuthor) {
-                setAuthor(savedAuthor);
-            }
+        if (!isOpen) return;
+
+        if (verifiedUsername) {
+            setAuthor(verifiedUsername);
+            return;
         }
-    }, [isOpen]);
+
+        const savedAuthor = localStorage.getItem(STORAGE_KEYS.LAST_AUTHOR);
+        if (savedAuthor) {
+            setAuthor(savedAuthor);
+        }
+    }, [isOpen, verifiedUsername]);
 
     useEffect(() => {
         if (pickedLocation) {
@@ -260,6 +274,7 @@ export function useAddPanneauForm({
         setComment,
         author,
         setAuthor,
+        verifiedUsername,
         typeIds,
         addType,
         removeType,

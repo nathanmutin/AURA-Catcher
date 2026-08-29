@@ -38,6 +38,7 @@ const AddPanneauModal: React.FC<Props> = ({
         setComment,
         author,
         setAuthor,
+        verifiedUsername,
         typeIds,
         addType,
         removeType,
@@ -129,6 +130,9 @@ const AddPanneauModal: React.FC<Props> = ({
                                 onChange={e => setAuthor(e.target.value)}
                                 placeholder="Votre pseudo"
                             />
+                            {verifiedUsername && author !== verifiedUsername && (
+                                <p className="author-hint">Publié sous un autre pseudo que celui protégé sur cet appareil ({verifiedUsername}).</p>
+                            )}
                         </div>
 
                         {/* Type selector - only show in create mode */}

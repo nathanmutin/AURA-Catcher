@@ -44,3 +44,13 @@ export async function post<T>(
         body,
     });
 }
+
+// Pour les routes JSON (les autres routes POST envoient du FormData pour les
+// uploads d'image, dont le Content-Type multipart est géré par le navigateur).
+export async function postJson<T>(path: string, body: unknown): Promise<T> {
+    return fetchJson<T>(`${BASE_URL}${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    });
+}

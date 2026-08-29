@@ -50,6 +50,16 @@ Follow these steps to set up the application locally:
 
 > ⚠️ **Production**: `.env.example` ships with placeholder credentials (`DB_ROOT_PASSWORD=root_password`, `DB_PASSWORD=aura_catcher_password`). Always replace them with strong, unique values before deploying — these defaults are meant for local development only.
 
+#### Pseudo protection (email verification)
+
+Users can optionally verify an email to "claim" a pseudo, preventing others from posting under it (see [AMELIORATIONS.md](AMELIORATIONS.md) §1). This uses [Resend](https://resend.com) to send the verification link:
+
+- `RESEND_API_KEY`: create a free account at resend.com and generate an API key.
+- `EMAIL_FROM`: sender address. The default `onboarding@resend.dev` only works for sending to your own Resend account email — to send to real users, [verify your own domain](https://resend.com/docs/dashboard/domains/introduction) in the Resend dashboard and use an address on it (e.g. `verification@yourdomain.com`).
+- `PUBLIC_URL`: the public URL of your deployment, used to build the verification link sent by email. Must be reachable from the internet in production (never `localhost`).
+
+Without a valid `RESEND_API_KEY`, requesting pseudo verification will fail with a 500 error — the rest of the app (posting anonymously or under a free-text pseudo) is unaffected.
+
 ### 2. Database Setup
 Start your local MariaDB server and create the database. You can use the CLI:
 

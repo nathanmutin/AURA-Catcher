@@ -35,10 +35,13 @@ services:
       dockerfile: ./Dockerfile
     container_name: aura-catcher-backend
     environment:
-      DB_HOST: aura-catcher-mariadb # Override 'localhost' 
+      DB_HOST: aura-catcher-mariadb # Override 'localhost'
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      EMAIL_FROM: ${EMAIL_FROM}
+      PUBLIC_URL: ${PUBLIC_URL}
     volumes:
       - ./data:/usr/src/data
     depends_on:

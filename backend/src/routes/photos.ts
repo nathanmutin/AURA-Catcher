@@ -4,6 +4,7 @@ import { uploadSingleImage } from '../upload';
 import { writeLimiter } from '../rateLimit';
 import { sanitizeAuthor } from '../validation';
 import { addPhotoToPanneau, getImageFilePath } from '../services/panneauxService';
+import { resolveAuthor, DEVICE_TOKEN_COOKIE } from '../services/authService';
 
 const router = Router();
 
@@ -29,12 +30,14 @@ router.get('/photo/:id', asyncHandler(async (req, res) => {
 router.post('/panneaux/:id/photos', writeLimiter, uploadSingleImage, asyncHandler(async (req, res) => {
     const id = String(req.params.id);
     const file = req.file;
-    const author = sanitizeAuthor(req.body.author);
+    const requestedAuthor = sanitizeAuthor(req.body.author);
 
     if (!file) {
         res.status(400).json({ error: 'Image manquante' });
         return;
     }
+
+    const author = await resolveAuthor(req.cookies?.[DEVICE_TOKEN_COOKIE], requestedAuthor);
 
     const { imageId } = await addPhotoToPanneau({
         panneauId: id,

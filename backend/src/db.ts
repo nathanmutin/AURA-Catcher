@@ -90,6 +90,33 @@ export const initDb = async () => {
       )
     `);
 
+    // Demandes de vérification d'email en attente (liens à usage unique).
+    // On ne stocke jamais le token en clair, seulement son hash SHA-256 :
+    // même en cas de fuite de la base, les liens ne sont pas réutilisables.
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS email_verifications (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        tokenHash VARCHAR(64) NOT NULL UNIQUE,
+        expiresAt DATETIME NOT NULL,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Tokens longue durée délivrés à un appareil après vérification de
+    // l'email : un même utilisateur peut avoir plusieurs appareils vérifiés.
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS device_tokens (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        tokenHash VARCHAR(64) NOT NULL UNIQUE,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        lastUsedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
     console.log('Database initialized');
   } catch (err) {
     console.error('Error initializing database:', err);
