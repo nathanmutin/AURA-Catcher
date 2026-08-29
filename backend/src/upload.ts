@@ -52,7 +52,7 @@ function wrapUpload(middleware: RequestHandler): RequestHandler {
 
             if (err instanceof multer.MulterError) {
                 if (err.code === 'LIMIT_FILE_SIZE') {
-                    res.status(400).json({ error: `File too large (max ${MAX_FILE_SIZE / (1024 * 1024)}MB)` });
+                    res.status(400).json({ error: `Fichier trop volumineux (max ${MAX_FILE_SIZE / (1024 * 1024)} Mo)` });
                     return;
                 }
                 res.status(400).json({ error: err.message });
@@ -60,7 +60,7 @@ function wrapUpload(middleware: RequestHandler): RequestHandler {
             }
 
             if (err instanceof Error && err.message === 'INVALID_FILE_TYPE') {
-                res.status(400).json({ error: 'Invalid file type. Allowed: jpeg, png, webp, gif' });
+                res.status(400).json({ error: 'Type de fichier non autorisé (formats acceptés : jpeg, png, webp, gif)' });
                 return;
             }
 

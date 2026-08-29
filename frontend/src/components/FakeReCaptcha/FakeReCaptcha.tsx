@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchPanneaux, photoUrl } from '../../api/client';
+import { fetchPanneaux, fetchTypes, photoUrl } from '../../api/client';
 import './FakeReCaptcha.css';
 
 interface CaptchaImage {
@@ -9,18 +9,20 @@ interface CaptchaImage {
     isAura: boolean;
 }
 
-// Import automatically all images in the assets/recaptcha folder
-const piegeModules = import.meta.glob('../../assets/recaptcha/*.{jpg,jpeg,png,webp,avif}', { eager: true });
+const COMMUNE_TYPE_NAME = 'Commune';
 
-const ALL_PIEGE_IMAGES: CaptchaImage[] = Object.values(piegeModules).map((mod: any, index) => ({
+// Import automatically all images in the assets/recaptcha folder
+const piegeModules = import.meta.glob<{ default: string }>('../../assets/recaptcha/*.{jpg,jpeg,png,webp,avif}', { eager: true });
+
+const ALL_PIEGE_IMAGES: CaptchaImage[] = Object.values(piegeModules).map((mod, index) => ({
     id: `piege-${index}`,
     src: mod.default,
     isAura: false
 }));
 
-const shuffleArray = (array: any[]) => {
-    return array.sort(() => Math.random() - 0.5);
-};
+function shuffleArray<T>(array: T[]): T[] {
+    return [...array].sort(() => Math.random() - 0.5);
+}
 
 const FakeReCaptcha: React.FC = () => {
     const [isVisible, setIsVisible] = useState(false);
@@ -40,41 +42,50 @@ const FakeReCaptcha: React.FC = () => {
         return !lastVisit || now - parseInt(lastVisit || '0') > threshold;
     });
 
-    const { data: panneaux, isSuccess } = useQuery({
+    const { data: panneaux, isSuccess: panneauxLoaded } = useQuery({
         queryKey: ['panneaux'],
         queryFn: fetchPanneaux,
         enabled: shouldCheck,
     });
+    // Le type "Commune" est résolu par son nom plutôt qu'un id en dur : l'ordre
+    // ou la présence des types en base peut changer sans casser ce composant.
+    const { data: types, isSuccess: typesLoaded } = useQuery({
+        queryKey: ['types'],
+        queryFn: fetchTypes,
+        enabled: shouldCheck,
+    });
 
     useEffect(() => {
-        if (!shouldCheck) return;
-        
-        if (isSuccess && panneaux && images.length === 0) {
-            const communePanels = panneaux.filter((p: any) => p.typeId === 2);
+        if (!shouldCheck || images.length > 0) return;
+        if (!panneauxLoaded || !typesLoaded || !panneaux || !types) return;
 
-            if (communePanels.length > 0) {
-                // If we don't have enough panels, repeat them to reach 6
-                let availablePanels = [...communePanels];
-                while (availablePanels.length < 6) {
-                    availablePanels = [...availablePanels, ...communePanels];
-                }
+        const communeType = types.find(t => t.name === COMMUNE_TYPE_NAME);
+        if (!communeType) return;
 
-                // Pick exactly 6
-                const shuffledPanels = shuffleArray(availablePanels).slice(0, 6);
-                const auraImages: CaptchaImage[] = shuffledPanels.map((p: any, index: number) => ({
-                    id: `aura-${p.id}-${index}`,
-                    src: photoUrl(p.imageIds[0]),
-                    isAura: true
-                }));
+        const communePanels = panneaux.filter(p => p.typeIds.includes(communeType.id));
 
-                // We pick exactly 3 random pièges
-                const selectedPieges = shuffleArray([...ALL_PIEGE_IMAGES]).slice(0, 3);
-
-                setImages(shuffleArray([...auraImages, ...selectedPieges]));
-                setIsVisible(true);
+        if (communePanels.length > 0) {
+            // If we don't have enough panels, repeat them to reach 6
+            let availablePanels = [...communePanels];
+            while (availablePanels.length < 6) {
+                availablePanels = [...availablePanels, ...communePanels];
             }
+
+            // Pick exactly 6
+            const shuffledPanels = shuffleArray(availablePanels).slice(0, 6);
+            const auraImages: CaptchaImage[] = shuffledPanels.map((p, index) => ({
+                id: `aura-${p.id}-${index}`,
+                src: photoUrl(p.imageIds[0]),
+                isAura: true
+            }));
+
+            // We pick exactly 3 random pièges
+            const selectedPieges = shuffleArray(ALL_PIEGE_IMAGES).slice(0, 3);
+
+            setImages(shuffleArray([...auraImages, ...selectedPieges]));
+            setIsVisible(true);
         }
-    }, [isSuccess, panneaux, images.length]);
+    }, [panneauxLoaded, typesLoaded, panneaux, types, images.length, shouldCheck]);
 
     if (!isVisible) return null;
 

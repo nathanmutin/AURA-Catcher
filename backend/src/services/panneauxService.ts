@@ -163,7 +163,7 @@ export async function addPhotoToPanneau(input: AddPhotoInput): Promise<{ imageId
         return rows.length > 0;
     });
     if (!panelExists) {
-        throw new AppError(404, 'Panneau not found');
+        throw new AppError(404, 'Panneau introuvable');
     }
 
     const { fileNameOriginal, fileNameSmall } = await processImage(file);
@@ -246,7 +246,7 @@ export async function getImageFilePath(imageId: string, size: 'small' | 'origina
     });
 
     if (!row) {
-        throw new AppError(404, 'Image not found');
+        throw new AppError(404, 'Image introuvable');
     }
 
     const filePath = size === 'original'
@@ -254,7 +254,7 @@ export async function getImageFilePath(imageId: string, size: 'small' | 'origina
         : path.join(SMALL_DIR, row.fileNameSmall);
 
     if (!fs.existsSync(filePath)) {
-        throw new AppError(404, 'File not found on disk');
+        throw new AppError(404, 'Fichier introuvable sur le disque');
     }
 
     return filePath;

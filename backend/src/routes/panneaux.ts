@@ -36,7 +36,7 @@ router.post('/panneaux', writeLimiter, uploadSingleImage, asyncHandler(async (re
     const author = sanitizeAuthor(req.body.author);
 
     if (!file || !coords || !typeIds) {
-        res.status(400).json({ error: 'Missing or invalid required fields' });
+        res.status(400).json({ error: 'Champs requis manquants ou invalides' });
         return;
     }
 

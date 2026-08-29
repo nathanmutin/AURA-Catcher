@@ -3,6 +3,7 @@ import type React from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { handleHEIC, getGPSFromImage } from '../../utils/photos';
 import { createPanneau, fetchTypes, uploadPhotoToPanel } from '../../api/client';
+import { ApiError } from '../../api/apiClient';
 import { STORAGE_KEYS } from '../../utils/constants';
 import { getNearbyPanels } from '../../utils/distanceUtils';
 import type { Panneau } from '@shared/types';
@@ -30,6 +31,11 @@ type FlowAction =
 
 function initFlowState(mode: ModalMode, panneauId: number | undefined): FlowState {
     return { mode, panneauId, location: null, nearbyPanels: [], skipNearbyCheck: false };
+}
+
+function describeError(err: unknown): string {
+    if (err instanceof ApiError) return err.message;
+    return 'Erreur lors de l\'envoi. Réessayez.';
 }
 
 // Centralise les transitions entre les 3 modes du formulaire (create / addPhoto /
@@ -146,7 +152,7 @@ export function useAddPanneauForm({
         },
         onError: (err) => {
             console.error(err);
-            alert('Erreur lors de l\'envoi');
+            alert(describeError(err));
         }
     });
 
@@ -162,7 +168,7 @@ export function useAddPanneauForm({
         },
         onError: (err) => {
             console.error(err);
-            alert('Erreur lors de l\'envoi');
+            alert(describeError(err));
         }
     });
 

@@ -48,6 +48,8 @@ Follow these steps to set up the application locally:
     ```
 3.  Edit `.env` and fill in your MariaDB database credentials.
 
+> ⚠️ **Production**: `.env.example` ships with placeholder credentials (`DB_ROOT_PASSWORD=root_password`, `DB_PASSWORD=aura_catcher_password`). Always replace them with strong, unique values before deploying — these defaults are meant for local development only.
+
 ### 2. Database Setup
 Start your local MariaDB server and create the database. You can use the CLI:
 

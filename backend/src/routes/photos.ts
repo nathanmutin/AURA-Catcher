@@ -32,7 +32,7 @@ router.post('/panneaux/:id/photos', writeLimiter, uploadSingleImage, asyncHandle
     const author = sanitizeAuthor(req.body.author);
 
     if (!file) {
-        res.status(400).json({ error: 'Missing image file' });
+        res.status(400).json({ error: 'Image manquante' });
         return;
     }
 

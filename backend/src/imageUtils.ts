@@ -17,8 +17,8 @@ export const processImage = async (file: Express.Multer.File): Promise<Processed
     // random uuid + validated extension
     const timestamp = Date.now();
     const originalName = `${timestamp}-${file.filename}`;
-    // For small version, we force jpg extension since we convert to jpeg
-    const smallName = `${timestamp}-small-${path.parse(file.filename).name}.jpg`;
+    // La vignette est encodée en WebP plutôt qu'en JPEG
+    const smallName = `${timestamp}-small-${path.parse(file.filename).name}.webp`;
 
     const originalPath = path.join(ORIGINAL_DIR, originalName);
     const smallPath = path.join(SMALL_DIR, smallName);
@@ -31,7 +31,7 @@ export const processImage = async (file: Express.Multer.File): Promise<Processed
         await sharp(originalPath)
             .rotate()
             .resize(400, 400, { fit: 'outside' })
-            .jpeg({ quality: 80 })
+            .webp({ quality: 80 })
             .toFile(smallPath);
     } catch (err) {
         // Ne laisse rien d'orpheline sur le disque si une des étapes échoue
