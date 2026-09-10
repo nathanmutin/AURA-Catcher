@@ -61,23 +61,20 @@ export const initDb = async () => {
       )
     `);
 
-    // Insert default types if empty
-    const typesCountRows = await conn.query('SELECT COUNT(*) as count FROM panel_types');
-    if (Number(typesCountRows[0].count) === 0) {
-      await conn.query(`
-        INSERT INTO panel_types (name, points) VALUES
-        ('Autre', 1),
-        ('Commune', 5),
-        ('Lycée', 5),
-        ('Sécurité', 5),
-        ('VIGI360', 2),
-        ('Pub/Bache', 2),
-        ('Borne TER', 1),
-        ('Borne Oura', 1),
-        ('Montagne', 1),
-        ('Arrêt de bus', 1)
-      `);
-    }
+    // Insert default types
+    await conn.query(`
+      INSERT IGNORE INTO panel_types (name, points) VALUES
+      ('Autre', 1),
+      ('Commune', 5),
+      ('Lycée', 5),
+      ('Sécurité', 5),
+      ('VIGI360', 2),
+      ('Pub/Bache', 2),
+      ('Borne TER', 1),
+      ('Borne Oura', 1),
+      ('Montagne', 1),
+      ('Arrêt de bus', 1)
+    `);
 
     // Create panneau_types_mapping table
     await conn.query(`
