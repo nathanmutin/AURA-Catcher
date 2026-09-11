@@ -88,11 +88,10 @@ interface CreatePanneauInput {
     comment: string | null;
     author: string | undefined;
     typeIds: number[];
-    ip: string;
 }
 
 export async function createPanneau(input: CreatePanneauInput): Promise<Panneau> {
-    const { file, lat, lng, comment, author, typeIds, ip } = input;
+    const { file, lat, lng, comment, author, typeIds } = input;
 
     // Traite l'image (versions originale + réduite) avant d'ouvrir la transaction :
     // pas la peine de garder une connexion DB occupée pendant le traitement sharp.
@@ -134,7 +133,7 @@ export async function createPanneau(input: CreatePanneauInput): Promise<Panneau>
         throw err;
     }
 
-    logAction(`[NEW PANEL] ID: ${panneauId}, Lat: ${lat}, Lng: ${lng}, Author: ${author || 'Anonymous'}, Image: ${fileNameOriginal}, Types: ${typeIds.join(', ')}, IP: ${ip}`);
+    logAction(`[NEW PANEL] ID: ${panneauId}, Lat: ${lat}, Lng: ${lng}, Author: ${author || 'Anonymous'}, Image: ${fileNameOriginal}, Types: ${typeIds.join(', ')}`);
 
     return {
         id: panneauId,
@@ -152,11 +151,10 @@ interface AddPhotoInput {
     panneauId: string;
     file: Express.Multer.File;
     author: string | undefined;
-    ip: string;
 }
 
 export async function addPhotoToPanneau(input: AddPhotoInput): Promise<{ imageId: number }> {
-    const { panneauId, file, author, ip } = input;
+    const { panneauId, file, author } = input;
 
     const panelExists = await withConnection(async (conn) => {
         const rows = await conn.query('SELECT id FROM panneaux WHERE id = ?', [panneauId]);
@@ -191,7 +189,7 @@ export async function addPhotoToPanneau(input: AddPhotoInput): Promise<{ imageId
         throw err;
     }
 
-    logAction(`[NEW PHOTO] Panel ID: ${panneauId}, Author: ${author || 'Anonymous'}, Image: ${fileNameOriginal}, IP: ${ip}`);
+    logAction(`[NEW PHOTO] Panel ID: ${panneauId}, Author: ${author || 'Anonymous'}, Image: ${fileNameOriginal}`);
 
     return { imageId };
 }

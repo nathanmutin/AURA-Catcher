@@ -24,7 +24,7 @@ function hashToken(rawToken: string): string {
  * déjà revendiqué par une autre adresse, puis on envoie un lien à usage
  * unique par email.
  */
-export async function requestVerification(username: string, email: string, ip: string): Promise<void> {
+export async function requestVerification(username: string, email: string): Promise<void> {
     // Transaction plutôt que simple connexion : si l'envoi d'email échoue,
     // l'insertion du token doit être annulée elle aussi (pas de token orphelin
     // qui ne sera jamais utilisable).
@@ -53,7 +53,7 @@ export async function requestVerification(username: string, email: string, ip: s
         await sendVerificationEmail(email, username, verifyUrl);
     });
 
-    logAction(`[AUTH] Vérification demandée pour le pseudo "${username}" (${email}), IP: ${ip}`);
+    logAction(`[AUTH] Vérification demandée pour le pseudo "${username}" (${email})`);
 }
 
 /**

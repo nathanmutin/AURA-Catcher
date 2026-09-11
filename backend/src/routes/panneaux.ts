@@ -53,7 +53,6 @@ router.post('/panneaux', writeLimiter, uploadSingleImage, asyncHandler(async (re
         comment,
         author,
         typeIds,
-        ip: req.ip || 'unknown',
     });
 
     res.status(201).json(panneau);

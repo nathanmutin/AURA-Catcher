@@ -21,7 +21,7 @@ router.post('/auth/request-verification', authLimiter, asyncHandler(async (req, 
         return;
     }
 
-    await requestVerification(username, email, req.ip || 'unknown');
+    await requestVerification(username, email);
     res.json({ success: true });
 }));
 

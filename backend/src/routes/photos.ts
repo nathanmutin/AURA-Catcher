@@ -43,7 +43,6 @@ router.post('/panneaux/:id/photos', writeLimiter, uploadSingleImage, asyncHandle
         panneauId: id,
         file,
         author,
-        ip: req.ip || 'unknown',
     });
 
     res.status(201).json({
