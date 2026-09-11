@@ -1,0 +1,33 @@
+.location-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    background: #f0f9ff;
+    padding: 0.6rem 0.8rem;
+    border-radius: 12px;
+}
+
+.location-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.location-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.text-green {
+    color: #10b981;
+}
+
+.text-gray {
+    color: #94a3b8;
+}

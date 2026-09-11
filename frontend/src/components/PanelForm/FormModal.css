@@ -1,0 +1,109 @@
+/* Styles de la coquille de modale. Ils vivaient en double dans index.css et
+   dans AddPanneauModal.css, avec des valeurs qui avaient déjà divergé
+   (ombre en dur d'un côté, variable de l'autre) : ils n'ont maintenant
+   qu'un seul propriétaire, le composant FormModal. */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 1rem;
+    backdrop-filter: blur(8px);
+}
+
+.modal-card {
+    background: white;
+    width: 100%;
+    max-width: 420px;
+    border-radius: 24px;
+    padding: 1.5rem;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-sizing: border-box;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px) scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+.modal-card h2 {
+    font-size: 1.35rem;
+    color: #1e293b;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+/* Portée limitée à la modale : d'autres composants (NearbyPanelsDialog)
+   définissent leur propre .close-btn globale. */
+.modal-card .close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #64748b;
+    transition: all 0.2s ease;
+}
+
+.modal-card .close-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    transform: rotate(90deg);
+}
+
+.modal-card button[type="submit"] {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+    background: linear-gradient(135deg, var(--aura-blue, #008ecf), #0056b3);
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 142, 207, 0.3);
+    transition: all 0.2s ease;
+    color: white;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.modal-card button[type="submit"]:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 142, 207, 0.4);
+}
+
+.modal-card button[type="submit"]:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.modal-card button[type="submit"]:disabled {
+    background: #cbd5e1;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+}

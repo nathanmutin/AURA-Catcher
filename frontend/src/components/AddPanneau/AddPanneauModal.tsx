@@ -1,8 +1,12 @@
 import React from 'react';
-import { Camera, MapPin, X } from 'lucide-react';
+import { Camera } from 'lucide-react';
 import type { Panneau } from '@shared/types';
 import { useAddPanneauForm, type ModalMode } from './useAddPanneauForm';
 import NearbyPanelsDialog from './NearbyPanelsDialog';
+import FormModal from '../PanelForm/FormModal';
+import LocationField from '../PanelForm/LocationField';
+import TypePicker from '../PanelForm/TypePicker';
+import AuthorField from '../PanelForm/AuthorField';
 import './AddPanneauModal.css';
 
 interface Props {
@@ -38,12 +42,9 @@ const AddPanneauModal: React.FC<Props> = ({
         setComment,
         author,
         setAuthor,
-        verifiedUsername,
         typeIds,
         addType,
         removeType,
-        isAddingType,
-        setIsAddingType,
         types,
         isPhotoMode,
         isLoading,
@@ -72,12 +73,7 @@ const AddPanneauModal: React.FC<Props> = ({
     return (
         <>
             {flow.mode !== 'nearbySelection' && (
-            <div className="modal-overlay">
-                <div className="modal-card">
-                    <button className="close-btn" onClick={handleClose}><X /></button>
-
-                    <h2>{isPhotoMode ? 'Ajouter une photo' : 'Ajouter un panneau'}</h2>
-
+                <FormModal title={isPhotoMode ? 'Ajouter une photo' : 'Ajouter un panneau'} onClose={handleClose}>
                     <form onSubmit={handleSubmit}>
                         {/* Image Upload Area */}
                         <div className="upload-area" onClick={() => fileInputRef.current?.click()}>
@@ -100,90 +96,30 @@ const AddPanneauModal: React.FC<Props> = ({
 
                         {/* Location Status - only show in create mode */}
                         {!isPhotoMode && (
-                            <div className="location-section">
-                                <div className="location-status">
-                                    <MapPin size={20} className={flow.location ? 'text-green' : 'text-gray'} />
-                                    <span>
-                                        {flow.location
-                                            ? `Localisé : ${flow.location.lat.toFixed(4)}, ${flow.location.lng.toFixed(4)}`
-                                            : 'Position manquante'}
-                                    </span>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    className="btn-secondary"
-                                    onClick={() => {
-                                        onPickLocation?.();
-                                    }}
-                                >
+                            <LocationField
+                                text={flow.location
+                                    ? `Localisé : ${flow.location.lat.toFixed(4)}, ${flow.location.lng.toFixed(4)}`
+                                    : 'Position manquante'}
+                                highlighted={Boolean(flow.location)}
+                            >
+                                <button type="button" className="btn-secondary" onClick={() => onPickLocation?.()}>
                                     Choisir sur la carte
                                 </button>
-                            </div>
+                            </LocationField>
                         )}
 
-                        <div className="form-group">
-                            <label>Auteur (pseudo)</label>
-                            <input
-                                type="text"
-                                value={author}
-                                onChange={e => setAuthor(e.target.value)}
-                                placeholder="Votre pseudo"
-                            />
-                            {verifiedUsername && author !== verifiedUsername && (
-                                <p className="author-hint">Publié sous un autre pseudo que celui protégé sur cet appareil ({verifiedUsername}).</p>
-                            )}
-                        </div>
+                        <AuthorField label="Auteur (pseudo)" value={author} onChange={setAuthor} />
 
                         {/* Type selector - only show in create mode */}
                         {!isPhotoMode && (
                             <div className="form-group">
                                 <label>Types de panneau</label>
-                                <div className="selected-types">
-                                    {typeIds.map(tid => {
-                                        const type = types.find(t => t.id === tid);
-                                        return type ? (
-                                            <span key={type.id} className="type-badge">
-                                                {type.name}
-                                                <button type="button" onClick={() => removeType(type.id)}>
-                                                    <X size={14} />
-                                                </button>
-                                            </span>
-                                        ) : null;
-                                    })}
-                                    {isAddingType ? (
-                                        <div
-                                            className="add-type-dropdown"
-                                            tabIndex={0}
-                                            onBlur={() => setIsAddingType(false)}
-                                        >
-                                            {types
-                                                .filter(t => !typeIds.includes(t.id))
-                                                .map(t => (
-                                                    <button
-                                                        key={t.id}
-                                                        type="button"
-                                                        className="add-type-option"
-                                                        onMouseDown={e => {
-                                                            // prevent blur before click
-                                                            e.preventDefault();
-                                                            addType(t.id);
-                                                            setIsAddingType(false);
-                                                        }}
-                                                    >
-                                                        {t.name} ({t.points} pts)
-                                                    </button>
-                                                ))}
-                                            {types.filter(t => !typeIds.includes(t.id)).length === 0 && (
-                                                <div className="no-types">Aucun type disponible</div>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <button type="button" className="type-badge add-type-btn" onClick={() => setIsAddingType(true)}>
-                                            +
-                                        </button>
-                                    )}
-                                </div>
+                                <TypePicker
+                                    types={types}
+                                    selectedTypeIds={typeIds}
+                                    onAdd={addType}
+                                    onRemove={removeType}
+                                />
                             </div>
                         )}
 
@@ -208,8 +144,7 @@ const AddPanneauModal: React.FC<Props> = ({
                             {isLoading ? 'Envoi...' : (isPhotoMode ? 'Ajouter la photo' : 'Envoyer')}
                         </button>
                     </form>
-                </div>
-            </div>
+                </FormModal>
             )}
 
             <NearbyPanelsDialog

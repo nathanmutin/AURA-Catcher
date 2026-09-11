@@ -264,35 +264,6 @@ body {
   backdrop-filter: blur(4px);
 }
 
-/* ===== MODAL & OVERLAY UTILITIES ===== */
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(15, 23, 42, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  padding: 1rem;
-  backdrop-filter: blur(8px);
-}
-
-.modal-card {
-  background: white;
-  width: 100%;
-  max-width: 420px;
-  border-radius: 24px;
-  padding: 1.5rem;
-  position: relative;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: var(--shadow-lg);
-  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
 
 /* ===== FORM UTILITIES ===== */
 

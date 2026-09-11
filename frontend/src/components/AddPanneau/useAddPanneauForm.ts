@@ -4,8 +4,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { handleHEIC, getGPSFromImage } from '../../utils/photos';
 import { createPanneau, fetchTypes, uploadPhotoToPanel } from '../../api/client';
 import { ApiError } from '../../api/apiClient';
-import { useIdentity } from '../../hooks/useIdentity';
-import { STORAGE_KEYS } from '../../utils/constants';
+import { useDefaultAuthor, rememberAuthor } from '../PanelForm/AuthorField';
 import { getNearbyPanels } from '../../utils/distanceUtils';
 import type { Panneau } from '@shared/types';
 
@@ -101,7 +100,6 @@ export function useAddPanneauForm({
     const [comment, setComment] = useState('');
     const [author, setAuthor] = useState('');
     const [typeIds, setTypeIds] = useState<number[]>([]);
-    const [isAddingType, setIsAddingType] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const queryClient = useQueryClient();
@@ -112,27 +110,13 @@ export function useAddPanneauForm({
         enabled: isOpen && flow.mode === 'create',
     });
 
-    // Le pseudo vérifié de l'appareil (géré depuis le menu Compte, voir
-    // hooks/useIdentity) sert de valeur par défaut pour l'auteur, mais le
-    // champ reste librement modifiable : on peut poster sous un autre pseudo
-    // libre pour un panneau donné sans se déconnecter (voir authService.
-    // resolveAuthor côté backend, qui n'autorise que ça — pas l'usurpation
-    // d'un pseudo déjà protégé par quelqu'un d'autre).
-    const { username: verifiedUsername } = useIdentity();
+    const defaultAuthor = useDefaultAuthor();
 
     useEffect(() => {
-        if (!isOpen) return;
-
-        if (verifiedUsername) {
-            setAuthor(verifiedUsername);
-            return;
+        if (isOpen && defaultAuthor) {
+            setAuthor(defaultAuthor);
         }
-
-        const savedAuthor = localStorage.getItem(STORAGE_KEYS.LAST_AUTHOR);
-        if (savedAuthor) {
-            setAuthor(savedAuthor);
-        }
-    }, [isOpen, verifiedUsername]);
+    }, [isOpen, defaultAuthor]);
 
     useEffect(() => {
         if (pickedLocation) {
@@ -225,7 +209,7 @@ export function useAddPanneauForm({
             formData.append('image', file);
             if (author) {
                 formData.append('author', author);
-                localStorage.setItem(STORAGE_KEYS.LAST_AUTHOR, author);
+                rememberAuthor(author);
             }
 
             uploadPhotoMutation.mutate(formData);
@@ -239,7 +223,7 @@ export function useAddPanneauForm({
             formData.append('comment', comment);
             if (author) {
                 formData.append('author', author);
-                localStorage.setItem(STORAGE_KEYS.LAST_AUTHOR, author);
+                rememberAuthor(author);
             }
             typeIds.forEach(tid => formData.append('typeId', tid.toString()));
 
@@ -274,12 +258,9 @@ export function useAddPanneauForm({
         setComment,
         author,
         setAuthor,
-        verifiedUsername,
         typeIds,
         addType,
         removeType,
-        isAddingType,
-        setIsAddingType,
         types,
         isPhotoMode,
         isLoading,
