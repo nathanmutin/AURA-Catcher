@@ -75,7 +75,8 @@ const FaqPage: React.FC = () => {
 
                     <h2>Suivre l'activité du site</h2>
                     <p style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                        Un flux RSS liste les derniers panneaux, photos et contributeurs ajoutés sur le site.
+                        Un flux RSS liste les derniers panneaux, photos et contributeurs ajoutés sur le site,
+                        ainsi que les modifications apportées aux panneaux existants.
                     </p>
                     <div style={{ textAlign: 'center', margin: '1rem 0 2.5rem 0' }}>
                         <a href="/api/feed.rss" className="contact-button">

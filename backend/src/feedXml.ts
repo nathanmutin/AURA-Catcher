@@ -12,26 +12,41 @@ function escapeCdata(value: string): string {
     return value.replace(/]]>/g, ']]]]><![CDATA[>');
 }
 
+// Détail d'une modification : une ligne "Champ : ancienne → nouvelle valeur".
+// Les valeurs viennent de la base (dont des commentaires saisis par des
+// utilisateurs), donc elles sont échappées avant d'entrer dans le HTML.
+function renderChanges(changes: NonNullable<FeedItem['changes']>): string {
+    const rows = changes
+        .map((change) => `<li><strong>${escapeHtml(change.label)}</strong> : ${escapeHtml(change.before)} → ${escapeHtml(change.after)}</li>`)
+        .join('');
+    return `<ul>${rows}</ul>`;
+}
+
 // La description est envoyée en CDATA contenant du HTML : la plupart des
-// lecteurs de flux rendent ce HTML, donc la photo apparaît directement dans
-// l'aperçu de l'élément plutôt que d'être juste une pièce jointe technique.
+// lecteurs de flux rendent ce HTML, donc la photo et le détail des
+// modifications apparaissent directement dans l'aperçu de l'élément.
 // Le texte d'origine (potentiellement fourni par un utilisateur, ex: un
 // commentaire de panneau) reste échappé pour ne pas injecter de balises dans
 // le rendu HTML du lecteur — seules les balises qu'on ajoute nous-mêmes
-// (<img>, <p>) sont volontairement laissées littérales.
+// (<img>, <p>, <ul>) sont volontairement laissées littérales.
 //
 // Pas de texte générique de repli ("Un nouveau panneau a été ajouté...") si
-// le panneau n'a pas de commentaire : on omet la <description> plutôt que
-// d'y mettre une phrase qui ne dit rien (la photo, elle, reste affichée).
+// l'élément n'a rien à dire : on omet la <description> plutôt que d'y mettre
+// une phrase qui ne dit rien (la photo, elle, reste affichée).
 function renderDescription(item: FeedItem): string {
-    const text = item.description ? escapeHtml(item.description) : null;
+    const parts: string[] = [];
+    if (item.image) parts.push(`<img src="${item.image.url}" alt="Photo du panneau" />`);
+    if (item.description) parts.push(`<p>${escapeHtml(item.description)}</p>`);
+    if (item.changes?.length) parts.push(renderChanges(item.changes));
 
-    if (!item.image) {
-        return text ? `<description>${text}</description>` : '';
+    if (parts.length === 0) return '';
+
+    // Un texte seul n'a pas besoin d'être enrobé de HTML.
+    if (!item.image && !item.changes?.length) {
+        return `<description>${escapeHtml(item.description ?? '')}</description>`;
     }
 
-    const html = `<img src="${item.image.url}" alt="Photo du panneau" />` + (text ? `<p>${text}</p>` : '');
-    return `<description><![CDATA[${escapeCdata(html)}]]></description>`;
+    return `<description><![CDATA[${escapeCdata(parts.join(''))}]]></description>`;
 }
 
 // <enclosure> est le mécanisme RSS standard pour attacher un média à un
@@ -61,7 +76,7 @@ export function renderRssFeed(items: FeedItem[]): string {
   <channel>
     <title>AURA Catcher — Activité récente</title>
     <link>${escapeHtml(PUBLIC_URL)}</link>
-    <description>Derniers panneaux, photos et contributeurs sur AURA Catcher</description>
+    <description>Derniers panneaux, photos, modifications et contributeurs sur AURA Catcher</description>
     <language>fr</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>${itemsXml}
   </channel>
