@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { asyncHandler } from '../errors';
 import { authLimiter } from '../rateLimit';
 import { sanitizeAuthor, sanitizeEmail } from '../validation';
-import { requestVerification, verifyToken, getVerifiedUsername, logout, renameUser, deviceTokenCookieOptions, DEVICE_TOKEN_COOKIE } from '../services/authService';
+import { requestVerification, verifyToken, getVerifiedUser, logout, renameUser, deviceTokenCookieOptions, DEVICE_TOKEN_COOKIE } from '../services/authService';
 import { escapeHtml } from '../htmlEscape';
 
 const router = Router();
@@ -62,11 +62,13 @@ router.get('/auth/verify', asyncHandler(async (req, res) => {
 
 /**
  * GET /api/auth/me
- * Indique si l'appareil courant est vérifié, et pour quel pseudo.
+ * Indique si l'appareil courant est vérifié, pour quel pseudo, et si ce
+ * compte est administrateur (le front s'en sert pour afficher les actions
+ * d'admin — l'autorisation réelle est revérifiée à chaque appel côté serveur).
  */
 router.get('/auth/me', asyncHandler(async (req, res) => {
-    const username = await getVerifiedUsername(req.cookies?.[DEVICE_TOKEN_COOKIE]);
-    res.json({ username });
+    const user = await getVerifiedUser(req.cookies?.[DEVICE_TOKEN_COOKIE]);
+    res.json({ username: user?.username ?? null, isAdmin: user?.isAdmin ?? false });
 }));
 
 /**

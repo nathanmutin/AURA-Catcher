@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { History, Undo2 } from 'lucide-react';
+import { History, RotateCcw, Undo2 } from 'lucide-react';
 import type { EditableField, PanelType, Panneau } from '@shared/types';
-import { fetchPanneauHistory, fetchTypes, updatePanneau } from '../../api/client';
+import { fetchPanneauHistory, fetchTypes, restorePanneauRevision, updatePanneau } from '../../api/client';
 import { ApiError } from '../../api/apiClient';
+import { useIdentity } from '../../hooks/useIdentity';
 import FormModal from './FormModal';
 import LocationField from './LocationField';
 import TypePicker from './TypePicker';
@@ -45,8 +46,12 @@ const EditPanneauModal: React.FC<Props> = ({ panneau, isOpen, onClose, onPickLoc
     const [position, setPosition] = useState<{ lat: number; lng: number } | null>(null);
     const [author, setAuthor] = useState('');
     const [errorMsg, setErrorMsg] = useState('');
+    // Révision dont la restauration attend confirmation (validation en deux
+    // temps directement dans la ligne, plutôt qu'une boîte de dialogue).
+    const [pendingRestoreId, setPendingRestoreId] = useState<number | null>(null);
 
     const queryClient = useQueryClient();
+    const { isAdmin } = useIdentity();
     const defaultAuthor = useDefaultAuthor();
 
     const { data: types = [] } = useQuery<PanelType[]>({
@@ -100,6 +105,19 @@ const EditPanneauModal: React.FC<Props> = ({ panneau, isOpen, onClose, onPickLoc
         },
         onError: (err) => {
             setErrorMsg(err instanceof ApiError ? err.message : 'Erreur lors de l\'enregistrement. Réessayez.');
+        },
+    });
+
+    const restoreMutation = useMutation({
+        mutationFn: (revisionId: number) => restorePanneauRevision(panneau!.id, revisionId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['panneaux'] });
+            queryClient.invalidateQueries({ queryKey: ['panneauHistory', panneau?.id] });
+            setPendingRestoreId(null);
+        },
+        onError: (err) => {
+            setPendingRestoreId(null);
+            setErrorMsg(err instanceof ApiError ? err.message : 'Erreur lors de la restauration. Réessayez.');
         },
     });
 
@@ -175,7 +193,7 @@ const EditPanneauModal: React.FC<Props> = ({ panneau, isOpen, onClose, onPickLoc
                 <div className="edit-history">
                     <h3><History size={14} /> Historique</h3>
                     <ul>
-                        {history.map(revision => (
+                        {history.map((revision, index) => (
                             <li key={revision.id}>
                                 <span className="edit-history-date">{formatEditDate(revision.createdAt)}</span>
                                 <span className="edit-history-author">{revision.author || 'Anonyme'}</span>
@@ -186,6 +204,38 @@ const EditPanneauModal: React.FC<Props> = ({ panneau, isOpen, onClose, onPickLoc
                                             ? 'création'
                                             : revision.fields.map(field => FIELD_LABELS[field] ?? field).join(', ')}
                                 </span>
+                                {/* index 0 = état courant : le restaurer ne ferait rien. */}
+                                {isAdmin && index > 0 && (
+                                    pendingRestoreId === revision.id ? (
+                                        <span className="edit-history-confirm">
+                                            <button
+                                                type="button"
+                                                className="edit-history-confirm-yes"
+                                                onClick={() => restoreMutation.mutate(revision.id)}
+                                                disabled={restoreMutation.isPending}
+                                            >
+                                                {restoreMutation.isPending ? '...' : 'Confirmer'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="edit-history-confirm-no"
+                                                onClick={() => setPendingRestoreId(null)}
+                                            >
+                                                Annuler
+                                            </button>
+                                        </span>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            className="edit-history-restore"
+                                            onClick={() => { setErrorMsg(''); setPendingRestoreId(revision.id); }}
+                                            title="Restaurer cette version"
+                                            aria-label="Restaurer cette version"
+                                        >
+                                            <RotateCcw size={13} />
+                                        </button>
+                                    )
+                                )}
                             </li>
                         ))}
                     </ul>

@@ -35,6 +35,11 @@ export const fetchPanneauHistory = async (panneauId: number): Promise<PanneauRev
     return get<PanneauRevision[]>(`/api/panneaux/${panneauId}/history`);
 };
 
+// Restaure une révision antérieure. Réservé aux admins (403 sinon).
+export const restorePanneauRevision = async (panneauId: number, revisionId: number): Promise<Panneau> => {
+    return postJson<Panneau>(`/api/panneaux/${panneauId}/restore`, { revisionId });
+};
+
 export const fetchGlobalStats = async (): Promise<{ totalPanels: number; totalContributors: number }> => {
     return get<{ totalPanels: number; totalContributors: number }>('/api/stats/global');
 };
@@ -56,9 +61,10 @@ export const requestPseudoVerification = async (username: string, email: string)
     await postJson<{ success: boolean }>('/api/auth/request-verification', { username, email });
 };
 
-// Indique si cet appareil est vérifié, et pour quel pseudo (null sinon).
-export const fetchVerifiedIdentity = async (): Promise<{ username: string | null }> => {
-    return get<{ username: string | null }>('/api/auth/me');
+// Indique si cet appareil est vérifié, pour quel pseudo (null sinon), et si
+// ce compte est administrateur.
+export const fetchVerifiedIdentity = async (): Promise<{ username: string | null; isAdmin: boolean }> => {
+    return get<{ username: string | null; isAdmin: boolean }>('/api/auth/me');
 };
 
 // Déconnecte l'appareil courant (invalide le token, efface le cookie).

@@ -436,6 +436,77 @@ export async function getPanneauHistory(panneauId: number): Promise<PanneauRevis
     });
 }
 
+/**
+ * Restaure un panneau dans l'état d'une révision antérieure (réservé aux
+ * admins, voir requireAdmin côté route).
+ *
+ * La restauration n'efface pas l'historique : elle ajoute une révision de
+ * plus, marquée `restoredFrom`. Réparer est donc une action tracée comme une
+ * autre — y compris si c'est l'admin qui abuse.
+ */
+export async function restorePanneauRevision(panneauId: number, revisionId: number, adminUsername: string): Promise<Panneau> {
+    const panneau = await withTransaction(async (conn) => {
+        const current = await lockCurrentState(conn, panneauId);
+
+        const revisionRows = await conn.query(
+            'SELECT id, panneau_id, lat, lng, comment FROM panneau_revisions WHERE id = ?',
+            [revisionId]
+        );
+        const revision = revisionRows[0];
+        // Vérifie aussi l'appartenance : sans ça, on pourrait appliquer à un
+        // panneau l'état d'un autre en devinant un id de révision.
+        if (!revision || Number(revision.panneau_id) !== panneauId) {
+            throw new AppError(404, 'Révision introuvable pour ce panneau.');
+        }
+
+        const revisionTypeRows = await conn.query(
+            'SELECT type_id FROM panneau_revision_types WHERE revision_id = ?',
+            [revisionId]
+        );
+        const revisionTypeIds: number[] = revisionTypeRows.map((row: { type_id: number }) => Number(row.type_id)).sort((a: number, b: number) => a - b);
+
+        const changedFields: EditableField[] = [];
+        const revisionLat = Number(revision.lat);
+        const revisionLng = Number(revision.lng);
+        const revisionComment: string | null = revision.comment ?? null;
+
+        if (Math.abs(revisionLat - current.lat) > 1e-9 || Math.abs(revisionLng - current.lng) > 1e-9) {
+            changedFields.push('position');
+        }
+        if (revisionComment !== current.comment) {
+            changedFields.push('comment');
+        }
+        if (revisionTypeIds.join(',') !== current.typeIds.join(',')) {
+            changedFields.push('types');
+        }
+
+        if (changedFields.length === 0) {
+            throw new AppError(400, 'Le panneau est déjà dans cet état.');
+        }
+
+        // Restaurer, c'est recopier un ancien état dans une nouvelle
+        // révision : l'ancienne reste intacte, et le panneau pointe sur la
+        // nouvelle.
+        const adminId = await getOrCreateUser(conn, adminUsername);
+        const newRevisionId = await insertRevision(
+            conn,
+            { id: panneauId, lat: revisionLat, lng: revisionLng, comment: revisionComment, typeIds: revisionTypeIds },
+            { changedFields, editorId: adminId, restoredFrom: revisionId }
+        );
+        await conn.query('UPDATE panneaux SET current_revision_id = ? WHERE id = ?', [newRevisionId, panneauId]);
+
+        const restored = await loadPanneau(conn, panneauId);
+        if (!restored) {
+            throw new AppError(404, 'Panneau introuvable');
+        }
+        return restored;
+    });
+
+    logAction(`[RESTORE PANEL] ID: ${panneauId}, Revision: ${revisionId}, Admin: ${adminUsername}`);
+
+    return panneau;
+}
+
 export async function getGlobalStats(): Promise<{ totalPanels: number; totalContributors: number }> {
     return withConnection(async (conn) => {
         const [panelsCount] = await conn.query('SELECT COUNT(*) as count FROM panneaux');

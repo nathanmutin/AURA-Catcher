@@ -185,12 +185,17 @@ export async function renameUser(deviceTokenRaw: string | undefined, newUsername
     });
 }
 
-async function getUsernameFromDeviceToken(rawToken: string): Promise<string | null> {
+export interface VerifiedUser {
+    username: string;
+    isAdmin: boolean;
+}
+
+async function getUserFromDeviceToken(rawToken: string): Promise<VerifiedUser | null> {
     const tokenHash = hashToken(rawToken);
 
     return withConnection(async (conn) => {
         const rows = await conn.query(
-            'SELECT u.username FROM device_tokens dt JOIN users u ON u.id = dt.user_id WHERE dt.tokenHash = ?',
+            'SELECT u.username, u.is_admin FROM device_tokens dt JOIN users u ON u.id = dt.user_id WHERE dt.tokenHash = ?',
             [tokenHash]
         );
         if (rows.length === 0) return null;
@@ -198,8 +203,13 @@ async function getUsernameFromDeviceToken(rawToken: string): Promise<string | nu
         // Best-effort : trace du dernier usage, ne doit pas faire échouer la requête.
         conn.query('UPDATE device_tokens SET lastUsedAt = NOW() WHERE tokenHash = ?', [tokenHash]).catch(() => {});
 
-        return rows[0].username;
+        return { username: rows[0].username, isAdmin: Boolean(rows[0].is_admin) };
     });
+}
+
+async function getUsernameFromDeviceToken(rawToken: string): Promise<string | null> {
+    const user = await getUserFromDeviceToken(rawToken);
+    return user?.username ?? null;
 }
 
 async function isUsernameClaimed(username: string): Promise<boolean> {
@@ -212,6 +222,29 @@ async function isUsernameClaimed(username: string): Promise<boolean> {
 export async function getVerifiedUsername(deviceTokenRaw: string | undefined): Promise<string | null> {
     if (!deviceTokenRaw) return null;
     return getUsernameFromDeviceToken(deviceTokenRaw);
+}
+
+export async function getVerifiedUser(deviceTokenRaw: string | undefined): Promise<VerifiedUser | null> {
+    if (!deviceTokenRaw) return null;
+    return getUserFromDeviceToken(deviceTokenRaw);
+}
+
+/**
+ * Exige un appareil vérifié appartenant à un admin, et renvoie son pseudo.
+ *
+ * Point important : on part du token d'appareil (preuve de possession d'une
+ * boîte mail vérifiée), jamais du pseudo envoyé dans le corps de la requête —
+ * celui-ci est auto-déclaré et peut être n'importe quoi (voir resolveAuthor).
+ *
+ * Le droit admin ne s'accorde qu'en base :
+ *   UPDATE users SET is_admin = true WHERE username = '...';
+ */
+export async function requireAdmin(deviceTokenRaw: string | undefined): Promise<string> {
+    const user = deviceTokenRaw ? await getUserFromDeviceToken(deviceTokenRaw) : null;
+    if (!user || !user.isAdmin) {
+        throw new AppError(403, 'Action réservée aux administrateurs.');
+    }
+    return user.username;
 }
 
 export const deviceTokenCookieOptions = {

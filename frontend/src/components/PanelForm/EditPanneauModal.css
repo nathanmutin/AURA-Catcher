@@ -67,12 +67,61 @@
 
 .edit-history li {
     display: grid;
-    grid-template-columns: 4.5rem minmax(0, 1fr) minmax(0, 1.2fr);
+    grid-template-columns: 4.5rem minmax(0, 1fr) minmax(0, 1.2fr) auto;
     gap: 0.5rem;
     align-items: center;
     font-size: 0.78rem;
     color: #475569;
     min-height: 1.5rem;
+}
+
+/* Actions d'admin : discrètes, elles n'apparaissent que pour un compte admin */
+.edit-history-restore {
+    background: none;
+    border: none;
+    padding: 0.15rem;
+    border-radius: 6px;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: all 0.15s ease;
+}
+
+.edit-history-restore:hover {
+    background: #f1f5f9;
+    color: var(--aura-blue, #008ecf);
+}
+
+.edit-history-confirm {
+    display: flex;
+    gap: 0.3rem;
+    align-items: center;
+}
+
+.edit-history-confirm-yes,
+.edit-history-confirm-no {
+    border: none;
+    border-radius: 6px;
+    padding: 0.15rem 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.edit-history-confirm-yes {
+    background: var(--aura-blue, #008ecf);
+    color: white;
+}
+
+.edit-history-confirm-yes:disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+}
+
+.edit-history-confirm-no {
+    background: #f1f5f9;
+    color: #64748b;
 }
 
 .edit-history-date {

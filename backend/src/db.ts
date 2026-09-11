@@ -20,9 +20,13 @@ export const initDb = async () => {
         id INT AUTO_INCREMENT PRIMARY KEY,
         username VARCHAR(255) NOT NULL UNIQUE,
         email VARCHAR(255),
+        is_admin BOOLEAN NOT NULL DEFAULT false,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Le droit admin ne s'accorde qu'en SQL, volontairement :
+    //   UPDATE users SET is_admin = true WHERE username = 'natmut';
 
     // Un panneau, c'est une identité et deux fenêtres sur son historique :
     // sa première révision (auteur et date de création) et la révision

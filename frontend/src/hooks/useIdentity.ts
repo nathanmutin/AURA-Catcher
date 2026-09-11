@@ -33,6 +33,9 @@ export function useIdentity() {
 
     return {
         username: data?.username ?? null,
+        // Sert uniquement à afficher les actions d'admin : le serveur revérifie
+        // le droit à chaque appel, à partir du token d'appareil.
+        isAdmin: data?.isAdmin ?? false,
         isLoading,
         claim: claimMutation.mutateAsync,
         isClaiming: claimMutation.isPending,

@@ -3,8 +3,8 @@ import { asyncHandler } from '../errors';
 import { uploadSingleImage } from '../upload';
 import { writeLimiter } from '../rateLimit';
 import { parseLatLng, sanitizeComment, sanitizeAuthor, parseTypeIds, parseId } from '../validation';
-import { listPanneaux, createPanneau, updatePanneau, getPanneauHistory } from '../services/panneauxService';
-import { resolveAuthor, DEVICE_TOKEN_COOKIE } from '../services/authService';
+import { listPanneaux, createPanneau, updatePanneau, getPanneauHistory, restorePanneauRevision } from '../services/panneauxService';
+import { resolveAuthor, requireAdmin, DEVICE_TOKEN_COOKIE } from '../services/authService';
 
 const router = Router();
 
@@ -116,6 +116,26 @@ router.get('/panneaux/:id/history', asyncHandler(async (req, res) => {
     }
 
     res.json(await getPanneauHistory(panneauId));
+}));
+
+/**
+ * POST /api/panneaux/:id/restore
+ * Remet un panneau dans l'état d'une révision antérieure. Réservé aux admins :
+ * l'autorisation vient du token d'appareil vérifié, jamais du pseudo envoyé
+ * dans le corps de la requête.
+ */
+router.post('/panneaux/:id/restore', writeLimiter, asyncHandler(async (req, res) => {
+    const panneauId = parseId(req.params.id);
+    const revisionId = parseId(req.body.revisionId);
+    if (panneauId === null || revisionId === null) {
+        res.status(400).json({ error: 'Identifiant invalide' });
+        return;
+    }
+
+    const admin = await requireAdmin(req.cookies?.[DEVICE_TOKEN_COOKIE]);
+
+    const panneau = await restorePanneauRevision(panneauId, revisionId, admin);
+    res.json(panneau);
 }));
 
 export default router;
