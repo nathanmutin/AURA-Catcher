@@ -2,8 +2,8 @@ import { Router } from 'express';
 import { asyncHandler } from '../errors';
 import { uploadSingleImage } from '../upload';
 import { writeLimiter } from '../rateLimit';
-import { parseLatLng, sanitizeComment, sanitizeAuthor, parseTypeIds } from '../validation';
-import { listPanneaux, createPanneau } from '../services/panneauxService';
+import { parseLatLng, sanitizeComment, sanitizeAuthor, parseTypeIds, parseId } from '../validation';
+import { listPanneaux, createPanneau, updatePanneau, getPanneauHistory } from '../services/panneauxService';
 import { resolveAuthor, DEVICE_TOKEN_COOKIE } from '../services/authService';
 
 const router = Router();
@@ -56,6 +56,66 @@ router.post('/panneaux', writeLimiter, uploadSingleImage, asyncHandler(async (re
     });
 
     res.status(201).json(panneau);
+}));
+
+/**
+ * PATCH /api/panneaux/:id
+ * Modifie un panneau existant. Chaque champ est optionnel : seuls ceux
+ * présents dans le corps JSON sont modifiés (et historisés).
+ *
+ * - lat / lng : nouvelle position (déplacement borné côté service)
+ * - comment : nouveau commentaire ("" pour l'effacer)
+ * - typeId : nouvelle liste de types
+ * - author : pseudo de la personne qui modifie
+ */
+router.patch('/panneaux/:id', writeLimiter, asyncHandler(async (req, res) => {
+    const panneauId = parseId(req.params.id);
+    if (panneauId === null) {
+        res.status(400).json({ error: 'Identifiant de panneau invalide' });
+        return;
+    }
+
+    const hasPosition = req.body.lat !== undefined || req.body.lng !== undefined;
+    const coords = hasPosition ? parseLatLng(req.body.lat, req.body.lng) : null;
+    if (hasPosition && !coords) {
+        res.status(400).json({ error: 'Coordonnées invalides' });
+        return;
+    }
+
+    const typeIds = req.body.typeId !== undefined ? parseTypeIds(req.body.typeId) : undefined;
+    if (typeIds === null) {
+        res.status(400).json({ error: 'Types invalides' });
+        return;
+    }
+
+    const requestedAuthor = sanitizeAuthor(req.body.author);
+    const editor = await resolveAuthor(req.cookies?.[DEVICE_TOKEN_COOKIE], requestedAuthor);
+
+    const panneau = await updatePanneau({
+        panneauId,
+        lat: coords?.lat,
+        lng: coords?.lng,
+        // Distingue "champ absent" (inchangé) de "champ vidé" (commentaire effacé).
+        comment: req.body.comment === undefined ? undefined : sanitizeComment(req.body.comment),
+        typeIds,
+        editor,
+    });
+
+    res.json(panneau);
+}));
+
+/**
+ * GET /api/panneaux/:id/history
+ * Historique public d'un panneau (qui, quand, quels champs).
+ */
+router.get('/panneaux/:id/history', asyncHandler(async (req, res) => {
+    const panneauId = parseId(req.params.id);
+    if (panneauId === null) {
+        res.status(400).json({ error: 'Identifiant de panneau invalide' });
+        return;
+    }
+
+    res.json(await getPanneauHistory(panneauId));
 }));
 
 export default router;

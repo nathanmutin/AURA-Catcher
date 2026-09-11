@@ -24,16 +24,23 @@ export const initDb = async () => {
       )
     `);
 
-    // Create panneaux table
+    // Un panneau, c'est une identité et deux fenêtres sur son historique :
+    // sa première révision (auteur et date de création) et la révision
+    // courante (position, commentaire, types). Aucun état mutable ici — il
+    // n'existe donc aucun endroit où écrire un état qui contredirait
+    // l'historique.
+    //
+    // Pas de clé étrangère sur les deux pointeurs : panneau_revisions
+    // référence déjà panneaux, l'ajouter dans l'autre sens créerait un cycle
+    // (et les colonnes doivent rester nullables, la révision n'existant pas
+    // encore au moment d'insérer le panneau). Les deux pointeurs valent
+    // MIN(id) et MAX(id) des révisions du panneau : une requête suffit à
+    // vérifier qu'ils n'ont pas dérivé.
     await conn.query(`
       CREATE TABLE IF NOT EXISTS panneaux (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        lat REAL NOT NULL,
-        lng REAL NOT NULL,
-        comment TEXT,
-        author_id INT,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (author_id) REFERENCES users(id)
+        first_revision_id INT,
+        current_revision_id INT
       )
     `);
 
@@ -76,13 +83,36 @@ export const initDb = async () => {
       ('Arrêt de bus', 1)
     `);
 
-    // Create panneau_types_mapping table
+    // Historique : l'état COMPLET du panneau après chaque écriture, création
+    // comprise (changedFields NULL). Stocker l'état plutôt qu'un delta rend la
+    // restauration triviale et sans ambiguïté — un commentaire NULL veut dire
+    // "vide à cette révision", jamais "champ non modifié".
     await conn.query(`
-      CREATE TABLE IF NOT EXISTS panneau_types_mapping (
+      CREATE TABLE IF NOT EXISTS panneau_revisions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
         panneau_id INT NOT NULL,
-        type_id INT NOT NULL,
-        PRIMARY KEY (panneau_id, type_id),
+        lat REAL NOT NULL,
+        lng REAL NOT NULL,
+        comment TEXT,
+        changedFields VARCHAR(64),
+        restoredFrom INT,
+        editor_id INT,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (panneau_id) REFERENCES panneaux(id) ON DELETE CASCADE,
+        FOREIGN KEY (editor_id) REFERENCES users(id),
+        INDEX idx_panneau_revisions_panneau (panneau_id, id)
+      )
+    `);
+
+    // Les types d'une révision. Un type est toujours une ligne référençant
+    // panel_types : restaurer une version, c'est un INSERT ... SELECT, sans
+    // sérialisation intermédiaire.
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS panneau_revision_types (
+        revision_id INT NOT NULL,
+        type_id INT NOT NULL,
+        PRIMARY KEY (revision_id, type_id),
+        FOREIGN KEY (revision_id) REFERENCES panneau_revisions(id) ON DELETE CASCADE,
         FOREIGN KEY (type_id) REFERENCES panel_types(id)
       )
     `);

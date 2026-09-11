@@ -44,6 +44,12 @@ export function sanitizeEmail(email: unknown): string | null {
     return trimmed;
 }
 
+// Identifiant de ressource passé dans l'URL (:id) : entier strictement positif.
+export function parseId(value: unknown): number | null {
+    const num = typeof value === 'string' || typeof value === 'number' ? Number(value) : NaN;
+    return Number.isInteger(num) && num > 0 ? num : null;
+}
+
 export function parseTypeIds(typeId: unknown): number[] | null {
     const raw = Array.isArray(typeId) ? typeId : [typeId ?? 1];
     const parsed: number[] = [];

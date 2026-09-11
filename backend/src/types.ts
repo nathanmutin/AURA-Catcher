@@ -15,3 +15,17 @@ export interface Panneau {
     createdAt: string; // ISO date string
 }
 
+// Champs modifiables d'un panneau, tels qu'ils apparaissent dans l'historique.
+export type EditableField = 'position' | 'comment' | 'types';
+
+export interface PanneauRevision {
+    id: number;
+    author?: string;
+    createdAt: string; // ISO date string
+    // Vide = révision de création (le panneau n'existait pas avant).
+    fields: EditableField[];
+    // Renseigné quand cette révision est le résultat d'une restauration :
+    // id de la révision qui a été remise en place.
+    restoredFrom?: number;
+}
+
