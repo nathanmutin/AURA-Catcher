@@ -1,0 +1,96 @@
+/* Ne reste ici que ce qui est propre à la modification : l'intro, le bouton
+   d'annulation du déplacement, l'erreur et l'historique. La coquille, le
+   champ auteur, le sélecteur de types et le bandeau de position sont des
+   composants partagés (components/PanelForm/). */
+
+.edit-intro {
+    margin: 0 0 1rem;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: #64748b;
+}
+
+.btn-icon-undo {
+    background: white;
+    border: 1.5px solid #cbd5e1;
+    color: #64748b;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-icon-undo:hover {
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
+.edit-error {
+    margin: 0.5rem 0 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #b91c1c;
+}
+
+.edit-history {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.edit-history h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0 0 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #64748b;
+}
+
+.edit-history ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.edit-history li {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.78rem;
+    color: #475569;
+    min-height: 1.5rem;
+}
+
+.edit-history-date {
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+.edit-history-author {
+    font-weight: 600;
+    color: #334155;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.edit-history-fields {
+    color: #64748b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

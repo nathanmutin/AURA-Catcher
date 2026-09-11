@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { User, Calendar, Share2, Check, ImagePlus } from 'lucide-react';
+import { User, Calendar, Share2, Check, ImagePlus, Pencil } from 'lucide-react';
 import type { Panneau, PanelType } from '@shared/types';
 import { photoUrl } from '../../api/client';
 import { PhotoCarousel } from './PhotoCarousel';
@@ -12,9 +12,10 @@ interface PanneauMarkerProps {
     panneau: Panneau;
     types: PanelType[];
     isSelected?: boolean;
+    onEdit: (panneau: Panneau) => void;
 }
 
-export const PanneauMarker: React.FC<PanneauMarkerProps> = ({ panneau, types, isSelected = false }) => {
+export const PanneauMarker: React.FC<PanneauMarkerProps> = ({ panneau, types, isSelected = false, onEdit }) => {
     const map = useMap();
     const markerRef = useRef<L.Marker>(null);
     const [copied, setCopied] = useState(false);
@@ -124,9 +125,17 @@ export const PanneauMarker: React.FC<PanneauMarkerProps> = ({ panneau, types, is
                                     </span>
                                 </div>
                                 <div className="popup-actions">
-                                    <button 
-                                        className="popup-add-photo-btn" 
-                                        onClick={() => setIsUploadModalOpen(true)} 
+                                    <button
+                                        className="popup-add-photo-btn"
+                                        onClick={() => onEdit(panneau)}
+                                        title="Modifier ce panneau"
+                                        aria-label="Modifier ce panneau"
+                                    >
+                                        <Pencil size={18} />
+                                    </button>
+                                    <button
+                                        className="popup-add-photo-btn"
+                                        onClick={() => setIsUploadModalOpen(true)}
                                         title="Ajouter une photo"
                                         aria-label="Ajouter une photo"
                                     >

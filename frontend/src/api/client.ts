@@ -1,5 +1,5 @@
-import type { Panneau, PanelType } from '@shared/types';
-import { get, post, postJson } from './apiClient.ts';
+import type { Panneau, PanelType, PanneauRevision } from '@shared/types';
+import { get, post, postJson, patchJson } from './apiClient.ts';
 
 const BASE_URL = import.meta.env.VITE_API_URL || '';
 
@@ -15,6 +15,24 @@ export const photoUrl = (imageId: number, isSmall: boolean = true): string => {
 
 export const createPanneau = async (formData: FormData): Promise<Panneau> => {
     return post<Panneau>('/api/panneaux', formData);
+};
+
+// Modifie un panneau existant : seuls les champs fournis sont touchés.
+export interface PanneauUpdate {
+    lat?: number;
+    lng?: number;
+    comment?: string;
+    typeId?: number[];
+    author?: string;
+}
+
+export const updatePanneau = async (panneauId: number, update: PanneauUpdate): Promise<Panneau> => {
+    return patchJson<Panneau>(`/api/panneaux/${panneauId}`, update);
+};
+
+// Historique public d'un panneau (qui, quand, quels champs).
+export const fetchPanneauHistory = async (panneauId: number): Promise<PanneauRevision[]> => {
+    return get<PanneauRevision[]>(`/api/panneaux/${panneauId}/history`);
 };
 
 export const fetchGlobalStats = async (): Promise<{ totalPanels: number; totalContributors: number }> => {

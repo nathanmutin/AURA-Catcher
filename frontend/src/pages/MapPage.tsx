@@ -13,9 +13,11 @@ import "leaflet.locatecontrol/dist/L.Control.Locate.min.css";
 import { Plus } from 'lucide-react';
 import AddPanneauModal from '../components/AddPanneau/AddPanneauModal.tsx';
 import PickedLocationMarker from '../components/AddPanneau/PickedLocationMarker.tsx';
+import EditPanneauModal from '../components/PanelForm/EditPanneauModal.tsx';
 import { PanneauMarker } from '../components/Marker/PanneauMarker.tsx';
 import TypeFilterDropdown from '../components/Map/TypeFilterDropdown.tsx';
 import { usePanelFilters } from '../components/Map/usePanelFilters.ts';
+import type { Panneau } from '@shared/types';
 import './MapPage.css';
 
 // Fix for default marker icon
@@ -72,8 +74,21 @@ const MapPage: React.FC = () => {
     const [searchParams] = useSearchParams();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isPickingLocation, setIsPickingLocation] = useState(false);
     const [pickedLocation, setPickedLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+    // Panneau en cours de modification, et si sa modale est visible : elle est
+    // masquée (mais pas fermée, pour ne pas perdre la saisie) le temps de
+    // choisir une position sur la carte.
+    // On garde l'id plutôt que l'objet : après une restauration, le panneau
+    // relu depuis la liste doit repeupler le formulaire.
+    const [editingPanneauId, setEditingPanneauId] = useState<number | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const editingPanneau = panneaux.find(p => p.id === editingPanneauId) ?? null;
+
+    // Quelle modale a demandé de pointer un endroit sur la carte : c'est elle
+    // qu'on rouvrira une fois la position choisie (ou l'action annulée).
+    const [pickingFor, setPickingFor] = useState<'create' | 'edit' | null>(null);
+    const isPickingLocation = pickingFor !== null;
 
     const locationSelectionTimerRef = useRef<number | null>(null);
 
@@ -94,16 +109,58 @@ const MapPage: React.FC = () => {
             window.clearTimeout(locationSelectionTimerRef.current);
         }
 
+        // Capturé maintenant : au déclenchement du timer, pickingFor aura été remis à null.
+        const target = pickingFor;
         locationSelectionTimerRef.current = window.setTimeout(() => {
-            setIsPickingLocation(false);
-            setIsModalOpen(true);
+            setPickingFor(null);
+            if (target === 'edit') {
+                setIsEditModalOpen(true);
+            } else {
+                setIsModalOpen(true);
+            }
             locationSelectionTimerRef.current = null;
         }, 300);
     };
 
     const startPickingLocation = () => {
         setIsModalOpen(false);
-        setIsPickingLocation(true);
+        setPickingFor('create');
+    };
+
+    const startPickingForEdit = () => {
+        setIsEditModalOpen(false);
+        // Le marqueur déplaçable part de la position courante du panneau, pour
+        // recaler finement plutôt que de repointer à l'aveugle.
+        if (editingPanneau) {
+            setPickedLocation(prev => prev ?? { lat: editingPanneau.lat, lng: editingPanneau.lng });
+        }
+        setPickingFor('edit');
+    };
+
+    // Annuler le pointage rouvre la modale d'où on venait : la saisie en cours
+    // (types, commentaire, photo) n'est pas perdue.
+    const cancelPickingLocation = () => {
+        const target = pickingFor;
+        setPickingFor(null);
+        if (target === 'edit') {
+            setIsEditModalOpen(true);
+        } else if (target === 'create') {
+            setIsModalOpen(true);
+        }
+    };
+
+    const openEditModal = (panneau: Panneau) => {
+        // Repart de la position réelle du panneau plutôt que d'une position
+        // laissée par un ajout précédent.
+        setPickedLocation(null);
+        setEditingPanneauId(panneau.id);
+        setIsEditModalOpen(true);
+    };
+
+    const closeEditModal = () => {
+        setIsEditModalOpen(false);
+        setEditingPanneauId(null);
+        setPickedLocation(null);
     };
 
     const handleSuccess = () => {
@@ -145,7 +202,7 @@ const MapPage: React.FC = () => {
                 >
                     {filteredPanneaux.map((panneau) => {
                         const isSelected = panneau.id === selectedPanneauId;
-                        return <PanneauMarker key={panneau.id} panneau={panneau} types={types} isSelected={isSelected} />;
+                        return <PanneauMarker key={panneau.id} panneau={panneau} types={types} isSelected={isSelected} onEdit={openEditModal} />;
                     })}
                 </MarkerClusterGroup>
 
@@ -160,7 +217,7 @@ const MapPage: React.FC = () => {
 
             {/* FAB */}
             {!isPickingLocation && (
-                <button className="fab-add" onClick={() => setIsModalOpen(true)}>
+                <button className="fab-add" onClick={() => setIsModalOpen(true)} aria-label="Ajouter un panneau" title="Ajouter un panneau">
                     <Plus size={32} />
                 </button>
             )}
@@ -169,7 +226,7 @@ const MapPage: React.FC = () => {
             {isPickingLocation && (
                 <div className="picking-instruction">
                     <p>
-                        Touchez la carte pour placer le panneau
+                        {pickingFor === 'edit' ? 'Touchez la carte pour déplacer le panneau' : 'Touchez la carte pour placer le panneau'}
                         {pickedLocation && (
                             <>
                                 <br />
@@ -177,7 +234,7 @@ const MapPage: React.FC = () => {
                             </>
                         )}
                     </p>
-                    <button onClick={() => setIsPickingLocation(false)}>Annuler</button>
+                    <button onClick={cancelPickingLocation}>Annuler</button>
                 </div>
             )}
 
@@ -189,10 +246,18 @@ const MapPage: React.FC = () => {
                 setPickedLocation={setPickedLocation}
                 onResetLocation={() => {
                     setPickedLocation(null);
-                    setIsPickingLocation(false);
+                    setPickingFor(null);
                 }}
                 onSuccess={handleSuccess}
                 panneaux={panneaux}
+            />
+
+            <EditPanneauModal
+                panneau={editingPanneau}
+                isOpen={isEditModalOpen}
+                onClose={closeEditModal}
+                onPickLocation={startPickingForEdit}
+                pickedLocation={pickedLocation}
             />
         </div>
     );
