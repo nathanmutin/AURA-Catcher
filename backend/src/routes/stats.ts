@@ -14,7 +14,8 @@ router.get('/stats/global', asyncHandler(async (req, res) => {
 
 /**
  * GET /api/stats/leaderboard
- * Retrieves the leaderboard of contributors based on points.
+ * Classement complet des contributeurs par points, rang inclus (les ex æquo
+ * partagent le même rang).
  */
 router.get('/stats/leaderboard', asyncHandler(async (req, res) => {
     res.json(await getLeaderboard());

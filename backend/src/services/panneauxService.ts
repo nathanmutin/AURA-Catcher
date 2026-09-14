@@ -6,7 +6,7 @@ import { processImage, deleteProcessedImage } from '../imageUtils';
 import { logAction } from '../logger';
 import { AppError } from '../errors';
 import { SMALL_DIR, ORIGINAL_DIR } from '../config';
-import { Panneau, PanneauRevision, EditableField } from '../types';
+import { Panneau, PanneauRevision, EditableField, LeaderboardEntry } from '../types';
 
 interface PanelRow {
     id: number;
@@ -525,28 +525,36 @@ export async function getGlobalStats(): Promise<{ totalPanels: number; totalCont
     });
 }
 
-export async function getLeaderboard(): Promise<Array<{ username: string; count: number; totalPanels: number }>> {
+export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
     return withConnection(async (conn) => {
         // Les points reviennent à l'auteur du panneau (révision de création),
         // calculés sur les types de sa version courante.
+        //
+        // Tout le classement est renvoyé : c'est le front qui choisit quoi
+        // replier, et il a besoin de toutes les lignes pour situer le
+        // visiteur. Le rang est calculé ici avec RANK() plutôt que déduit de
+        // la position de la ligne, sinon deux scores égaux recevraient deux
+        // rangs différents selon l'ordre de sortie. Le tri par pseudo ne sert
+        // qu'à rendre l'ordre des ex æquo stable d'un chargement à l'autre.
         const rows = await conn.query(`
             SELECT
                 u.username,
-                SUM(t.points) as count,
-                COUNT(DISTINCT p.id) as total_panels
+                SUM(t.points) AS score,
+                COUNT(DISTINCT p.id) AS total_panels,
+                RANK() OVER (ORDER BY SUM(t.points) DESC) AS leaderboard_rank
             FROM panneaux p
             JOIN panneau_revisions first ON first.id = p.first_revision_id
             JOIN users u ON u.id = first.editor_id
             JOIN panneau_revision_types rt ON rt.revision_id = p.current_revision_id
             JOIN panel_types t ON t.id = rt.type_id
             GROUP BY u.id
-            ORDER BY count DESC
-            LIMIT 10
+            ORDER BY score DESC, u.username
         `);
 
-        return rows.map((row: { username: string; count: number | null; total_panels: number | null }) => ({
+        return rows.map((row: { username: string; score: number | null; total_panels: number | null; leaderboard_rank: number | bigint }) => ({
             username: row.username,
-            count: Number(row.count || 0),
+            rank: Number(row.leaderboard_rank),
+            count: Number(row.score || 0),
             totalPanels: Number(row.total_panels || 0),
         }));
     });

@@ -1,4 +1,4 @@
-import type { Panneau, PanelType, PanneauRevision } from '@shared/types';
+import type { LeaderboardEntry, Panneau, PanelType, PanneauRevision } from '@shared/types';
 import { get, post, postJson, patchJson } from './apiClient.ts';
 
 const BASE_URL = import.meta.env.VITE_API_URL || '';
@@ -44,8 +44,8 @@ export const fetchGlobalStats = async (): Promise<{ totalPanels: number; totalCo
     return get<{ totalPanels: number; totalContributors: number }>('/api/stats/global');
 };
 
-export const fetchLeaderboard = async (): Promise<Array<{ username: string; count: number; totalPanels: number }>> => {
-    return get<Array<{ username: string; count: number; totalPanels: number }>>('/api/stats/leaderboard');
+export const fetchLeaderboard = async (): Promise<LeaderboardEntry[]> => {
+    return get<LeaderboardEntry[]>('/api/stats/leaderboard');
 };
 
 export const fetchTypes = async (): Promise<PanelType[]> => {

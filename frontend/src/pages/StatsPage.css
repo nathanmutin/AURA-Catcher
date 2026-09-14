@@ -155,3 +155,50 @@
 }
 
 /* Bronze */
+
+/* Classement : ligne du visiteur et saut « … » */
+.data-table tr.leaderboard-me td {
+  background-color: var(--aura-bg);
+}
+
+.leaderboard-me-tag {
+  margin-left: 0.5rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background-color: var(--aura-blue);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.data-table tr.leaderboard-gap td {
+  padding: 0.25rem 1rem;
+  text-align: center;
+  color: var(--text-secondary, #64748b);
+  letter-spacing: 0.2em;
+}
+
+/* Bouton « Voir plus » commun au classement et aux derniers panneaux */
+.stats-more {
+  display: flex;
+  justify-content: center;
+}
+
+.stats-more-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid #e2e8f0;
+  background-color: white;
+  color: var(--text-primary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.stats-more-button:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}

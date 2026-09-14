@@ -4,6 +4,15 @@ export interface PanelType {
     points: number;
 }
 
+export interface LeaderboardEntry {
+    username: string;
+    // Rang « sportif » : les ex æquo partagent le même rang et le suivant
+    // saute d'autant (1, 2, 2, 4).
+    rank: number;
+    count: number;
+    totalPanels: number;
+}
+
 export interface Panneau {
     id: number;
     lat: number;

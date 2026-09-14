@@ -1,13 +1,17 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import './StatsPage.css';
-import { fetchGlobalStats, fetchLeaderboard } from '../api/client';
+import { fetchGlobalStats, fetchLeaderboard, fetchPanneaux, fetchTypes } from '../api/client';
+import Leaderboard from '../components/Stats/Leaderboard';
+import RecentPanels from '../components/Stats/RecentPanels';
 
 const StatsPage: React.FC = () => {
     const { data: globalStats, isLoading: isLoadingStats } = useQuery({ queryKey: ['stats'], queryFn: fetchGlobalStats });
     const { data: leaderboard = [], isLoading: isLoadingLeaderboard } = useQuery({ queryKey: ['leaderboard'], queryFn: fetchLeaderboard });
+    const { data: panneaux = [], isLoading: isLoadingPanneaux } = useQuery({ queryKey: ['panneaux'], queryFn: fetchPanneaux });
+    const { data: types = [], isLoading: isLoadingTypes } = useQuery({ queryKey: ['types'], queryFn: fetchTypes });
 
-    const loading = isLoadingStats || isLoadingLeaderboard;
+    const loading = isLoadingStats || isLoadingLeaderboard || isLoadingPanneaux || isLoadingTypes;
 
     if (loading) {
         return <div className="stats-container">Chargement...</div>;
@@ -26,35 +30,9 @@ const StatsPage: React.FC = () => {
                 </div>
             </div>
 
-            <div className="stats-section">
-                <h2 className="section-title">Top 10 des Contributeurs</h2>
-                <div className="table-container">
-                    <table className="data-table">
-                        <thead>
-                            <tr>
-                                <th style={{ width: '80px' }}>Position</th>
-                                <th>Contributeur</th>
-                                <th>Score</th>
-                                <th>Nb. Panneaux</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {leaderboard.map((entry, index) => (
-                                <tr key={entry.username}>
-                                    <td>
-                                        <span className={`rank-badge rank-${index + 1}`}>
-                                            {index + 1}
-                                        </span>
-                                    </td>
-                                    <td>{entry.username}</td>
-                                    <td>{entry.count}</td>
-                                    <td>{entry.totalPanels}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <Leaderboard entries={leaderboard} types={types} />
+
+            <RecentPanels panneaux={panneaux} types={types} />
         </div>
     );
 };
