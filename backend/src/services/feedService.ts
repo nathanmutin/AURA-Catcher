@@ -1,5 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
+import mariadb from 'mariadb';
 import { withConnection } from '../db';
 import { distanceMeters, formatDistance } from '../geo';
 import { PUBLIC_URL, SMALL_DIR } from '../config';
@@ -31,6 +32,7 @@ const FEED_ITEM_LIMIT = 50;
 
 interface PanneauRow {
     id: number;
+    first_revision_id: number;
     comment: string | null;
     createdAt: Date;
     username: string | null;
@@ -131,6 +133,32 @@ function diffRevisions(
     return changes;
 }
 
+/**
+ * Noms des types de chaque révision (« Commune » plutôt que « 2 »), triés par
+ * nom : deux révisions aux mêmes types donnent exactement la même liste.
+ */
+async function loadTypeNames(conn: mariadb.Connection, revisionIds: number[]): Promise<Map<number, string[]>> {
+    const namesByRevision = new Map<number, string[]>();
+    if (revisionIds.length === 0) return namesByRevision;
+
+    const placeholders = revisionIds.map(() => '?').join(',');
+    const rows: Array<{ revision_id: number; name: string }> = await conn.query(`
+        SELECT rt.revision_id, t.name
+        FROM panneau_revision_types rt
+        JOIN panel_types t ON t.id = rt.type_id
+        WHERE rt.revision_id IN (${placeholders})
+        ORDER BY t.name
+    `, revisionIds);
+
+    rows.forEach((row) => {
+        const revisionId = Number(row.revision_id);
+        const names = namesByRevision.get(revisionId) ?? [];
+        names.push(row.name);
+        namesByRevision.set(revisionId, names);
+    });
+    return namesByRevision;
+}
+
 function mimeTypeForFile(fileName: string): string {
     const ext = fileName.slice(fileName.lastIndexOf('.') + 1).toLowerCase();
     switch (ext) {
@@ -168,7 +196,7 @@ async function resolveImageEnclosure(imageId: number | null, fileNameSmall: stri
 export async function getRecentActivity(): Promise<FeedItem[]> {
     return withConnection(async (conn) => {
         const panneauRows: PanneauRow[] = await conn.query(`
-            SELECT p.id, first.comment, first.createdAt, u.username, img.id AS imageId, img.fileNameSmall
+            SELECT p.id, p.first_revision_id, first.comment, first.createdAt, u.username, img.id AS imageId, img.fileNameSmall
             FROM panneaux p
             JOIN panneau_revisions first ON first.id = p.first_revision_id
             LEFT JOIN users u ON u.id = first.editor_id
@@ -176,6 +204,11 @@ export async function getRecentActivity(): Promise<FeedItem[]> {
             ORDER BY first.createdAt DESC
             LIMIT ?
         `, [FEED_ITEM_LIMIT]);
+
+        // Les types de la révision de création, comme le commentaire : l'élément
+        // décrit le panneau tel qu'il a été ajouté. Une correction ultérieure
+        // des types a son propre élément « Panneau modifié » dans le flux.
+        const creationTypeNames = await loadTypeNames(conn, panneauRows.map((row) => Number(row.first_revision_id)));
 
         // Seules les photos ajoutées APRÈS la création du panneau comptent :
         // la toute première photo d'un panneau (id minimum pour ce
@@ -214,9 +247,12 @@ export async function getRecentActivity(): Promise<FeedItem[]> {
 
         const panneauItems = await Promise.all(panneauRows.map(async (row): Promise<FeedItem> => {
             const author = row.username || 'Anonyme';
+            const typeNames = creationTypeNames.get(Number(row.first_revision_id)) ?? [];
             return {
                 guid: `panneau-${row.id}`,
-                title: `Nouveau panneau ajouté par ${author}`,
+                title: typeNames.length > 0
+                    ? `Nouveau panneau (${typeNames.join(', ')}) ajouté par ${author}`
+                    : `Nouveau panneau ajouté par ${author}`,
                 link: `${PUBLIC_URL}/?panneauId=${row.id}`,
                 description: row.comment || undefined,
                 pubDate: row.createdAt,
@@ -251,7 +287,6 @@ export async function getRecentActivity(): Promise<FeedItem[]> {
         // lisible qu'une fenêtre SQL, et sans sous-requête corrélée nichée.
         const panelIds = [...new Set(revisionRows.map((row) => Number(row.panneau_id)))];
         const previousByRevision = new Map<number, RevisionState>();
-        const typeNamesByRevision = new Map<number, string[]>();
 
         if (panelIds.length > 0) {
             const panelPlaceholders = panelIds.map(() => '?').join(',');
@@ -277,29 +312,13 @@ export async function getRecentActivity(): Promise<FeedItem[]> {
                     previousByRevision.set(Number(row.id), states[index - 1]);
                 }
             });
-
-            // Noms des types (pas les ids : « Commune » plutôt que « 2 ») pour
-            // la révision affichée et celle qui la précède.
-            const revisionIds = [
-                ...revisionRows.map((row) => Number(row.id)),
-                ...[...previousByRevision.values()].map((state) => state.id),
-            ];
-            const revisionPlaceholders = revisionIds.map(() => '?').join(',');
-            const typeRows: Array<{ revision_id: number; name: string }> = await conn.query(`
-                SELECT rt.revision_id, t.name
-                FROM panneau_revision_types rt
-                JOIN panel_types t ON t.id = rt.type_id
-                WHERE rt.revision_id IN (${revisionPlaceholders})
-                ORDER BY t.name
-            `, revisionIds);
-
-            typeRows.forEach((row) => {
-                const revisionId = Number(row.revision_id);
-                const names = typeNamesByRevision.get(revisionId) ?? [];
-                names.push(row.name);
-                typeNamesByRevision.set(revisionId, names);
-            });
         }
+
+        // Types de la révision affichée et de celle qui la précède.
+        const typeNamesByRevision = await loadTypeNames(conn, [
+            ...revisionRows.map((row) => Number(row.id)),
+            ...[...previousByRevision.values()].map((state) => state.id),
+        ]);
 
         const revisionItems = await Promise.all(revisionRows.map(async (row): Promise<FeedItem> => {
             const author = row.username || 'Anonyme';
