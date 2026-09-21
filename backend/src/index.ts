@@ -4,7 +4,7 @@ import fs from 'fs';
 import routes from './routes';
 import { initDb } from './db';
 import { errorHandler } from './errors';
-import { LOGS_DIR, PHOTOS_DIR, TEMP_DIR, ORIGINAL_DIR, SMALL_DIR } from './config';
+import { LOGS_DIR, PHOTOS_DIR, TEMP_DIR, ORIGINAL_DIR, SMALL_DIR, TRUST_PROXY_HOPS } from './config';
 
 import compression from 'compression';
 import helmet from 'helmet';
@@ -16,6 +16,12 @@ import cookieParser from 'cookie-parser';
  */
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// req.ip = l'IP du visiteur et non celle du dernier proxy (voir config.ts).
+// Un nombre de sauts plutôt que `true` : Express ne retient que l'adresse
+// ajoutée par le plus lointain proxy de confiance, jamais celles qu'un
+// visiteur aurait lui-même glissées en tête de X-Forwarded-For.
+app.set('trust proxy', TRUST_PROXY_HOPS);
 
 // Ensure directories exist
 const dirs = [PHOTOS_DIR, TEMP_DIR, LOGS_DIR, ORIGINAL_DIR, SMALL_DIR];

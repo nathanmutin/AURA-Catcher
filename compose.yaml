@@ -42,6 +42,8 @@ services:
       RESEND_API_KEY: ${RESEND_API_KEY}
       EMAIL_FROM: ${EMAIL_FROM}
       PUBLIC_URL: ${PUBLIC_URL}
+      # Proxys devant le backend (2 si Traefik + nginx, 1 si nginx seul)
+      TRUST_PROXY_HOPS: 1
     volumes:
       - ./data:/usr/src/data
     depends_on:
