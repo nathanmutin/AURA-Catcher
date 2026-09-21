@@ -7,9 +7,9 @@ export const TEMP_DIR = path.join(PHOTOS_DIR, 'temp');
 export const ORIGINAL_DIR = path.join(PHOTOS_DIR, 'original');
 export const SMALL_DIR = path.join(PHOTOS_DIR, 'small');
 
-// URL publique du site, utilisée pour construire le lien de vérification
-// envoyé par email (doit être joignable depuis la boîte mail du visiteur,
-// donc jamais "localhost" en production).
+// URL publique du site, utilisée pour les liens absolus du flux RSS (doit
+// être joignable depuis un lecteur de flux, donc jamais "localhost" en
+// production) et pour savoir si le site est servi en HTTPS.
 
 export const PUBLIC_URL = process.env.PUBLIC_URL || 'http://localhost:5173';
 

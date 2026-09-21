@@ -1,38 +1,63 @@
 import crypto from 'crypto';
 import { withConnection, withTransaction, getOrCreateUser } from '../db';
-import { sendVerificationEmail } from '../email';
+import { sendVerificationCode } from '../email';
 import { logAction } from '../logger';
 import { AppError } from '../errors';
-import { PUBLIC_URL, COOKIE_SECURE } from '../config';
+import { COOKIE_SECURE } from '../config';
 
 // Nom du cookie qui porte le token d'appareil, partagé entre les routes
 // d'auth (qui le posent) et les routes panneaux/photos (qui le lisent).
 export const DEVICE_TOKEN_COOKIE = 'device_token';
 
+// Cookie qui rattache une demande de code au navigateur qui l'a faite : le
+// code n'est accepté que là, c'est ce qui garantit que l'appareil vérifié
+// est bien celui de la demande.
+export const PENDING_VERIFICATION_COOKIE = 'pending_verification';
+
 const VERIFICATION_TTL_MS = 15 * 60 * 1000; // 15 minutes
+const MAX_CODE_ATTEMPTS = 5;
 const DEVICE_TOKEN_MAX_AGE_MS = 365 * 24 * 60 * 60 * 1000; // 1 an
 
 // On ne stocke jamais un token en clair en base (voir db.ts) : seulement le
-// hash de ce qui a été envoyé par email / posé en cookie. Un accès en
-// lecture seule à la base ne suffit donc pas à usurper un pseudo.
+// hash de ce qui a été posé en cookie. Un accès en lecture seule à la base
+// ne suffit donc pas à usurper un pseudo.
 function hashToken(rawToken: string): string {
     return crypto.createHash('sha256').update(rawToken).digest('hex');
 }
 
+// Un code à 6 chiffres n'a qu'un million de valeurs : haché seul, il se
+// retrouverait instantanément à partir de son hash. Haché avec le jeton de
+// la demande, qui n'est jamais stocké en clair, il reste introuvable.
+function hashCode(requestToken: string, code: string): string {
+    return crypto.createHash('sha256').update(`${requestToken}:${code}`).digest('hex');
+}
+
 /**
  * Étape 1 : quelqu'un veut protéger un pseudo. On vérifie qu'il n'est pas
- * déjà revendiqué par une autre adresse, puis on envoie un lien à usage
- * unique par email.
+ * déjà revendiqué par une autre adresse, puis on envoie un code à 6 chiffres
+ * par email.
+ *
+ * Renvoie le jeton de la demande, à poser en cookie : seul ce navigateur
+ * pourra saisir le code. `previousRequestToken` est le cookie d'une demande
+ * précédente du même navigateur (« Renvoyer le code ») : elle est annulée,
+ * pour qu'un seul code soit valable à la fois.
  */
-export async function requestVerification(username: string, email: string): Promise<void> {
+export async function requestVerification(username: string, email: string, previousRequestToken: string | undefined): Promise<string> {
+    const requestToken = crypto.randomBytes(32).toString('hex');
+    const code = crypto.randomInt(0, 1_000_000).toString().padStart(6, '0');
+
     // Transaction plutôt que simple connexion : si l'envoi d'email échoue,
-    // l'insertion du token doit être annulée elle aussi (pas de token orphelin
-    // qui ne sera jamais utilisable).
+    // l'insertion de la demande doit être annulée elle aussi (pas de demande
+    // orpheline dont le code n'est jamais arrivé).
     await withTransaction(async (conn) => {
-        // Balaie au passage les demandes expirées et jamais cliquées : la
-        // plupart des liens ne sont jamais ouverts, donc sans ça la table
-        // grossirait indéfiniment sans qu'aucun autre code n'y touche jamais.
+        // Balaie au passage les demandes expirées : beaucoup ne sont jamais
+        // menées à terme, donc sans ça la table grossirait indéfiniment sans
+        // qu'aucun autre code n'y touche jamais.
         await conn.query('DELETE FROM email_verifications WHERE expiresAt < NOW()');
+
+        if (previousRequestToken) {
+            await conn.query('DELETE FROM email_verifications WHERE requestHash = ?', [hashToken(previousRequestToken)]);
+        }
 
         const rows = await conn.query('SELECT email FROM users WHERE username = ?', [username]);
         const existingEmail: string | null = rows[0]?.email ?? null;
@@ -41,66 +66,127 @@ export async function requestVerification(username: string, email: string): Prom
             throw new AppError(409, `Le pseudo "${username}" est déjà protégé par une autre adresse email.`);
         }
 
-        const rawToken = crypto.randomBytes(32).toString('hex');
-        const expiresAt = new Date(Date.now() + VERIFICATION_TTL_MS);
-
         await conn.query(
-            'INSERT INTO email_verifications (username, email, tokenHash, expiresAt) VALUES (?, ?, ?, ?)',
-            [username, email, hashToken(rawToken), expiresAt]
+            'INSERT INTO email_verifications (requestHash, username, email, codeHash, expiresAt) VALUES (?, ?, ?, ?, ?)',
+            [hashToken(requestToken), username, email, hashCode(requestToken, code), new Date(Date.now() + VERIFICATION_TTL_MS)]
         );
 
-        const verifyUrl = `${PUBLIC_URL}/api/auth/verify?token=${rawToken}`;
-        await sendVerificationEmail(email, username, verifyUrl);
+        await sendVerificationCode(email, username, code);
     });
 
-    logAction(`[AUTH] Vérification demandée pour le pseudo "${username}" (${email})`);
+    logAction(`[AUTH] Code de vérification envoyé pour le pseudo "${username}" (${email})`);
+    return requestToken;
 }
 
+type CodeCheck =
+    | { status: 'missing' | 'expired' }
+    | { status: 'wrong'; remainingAttempts: number }
+    | { status: 'verified'; username: string; deviceToken: string };
+
 /**
- * Étape 2 : l'utilisateur a cliqué sur le lien reçu par email. On consomme
- * le token (usage unique), on revendique le pseudo si ce n'est pas déjà
- * fait, et on délivre un nouveau token d'appareil longue durée.
+ * Étape 2 : l'utilisateur saisit le code reçu, dans le navigateur qui l'a
+ * demandé. Si le code est bon, la demande est consommée, le pseudo
+ * revendiqué, et l'appareil reçoit un token longue durée.
+ *
+ * Un mauvais code consomme un essai ; au 5e, la demande est supprimée et il
+ * faut en refaire une. Avec au plus 5 demandes par heure et par adresse IP
+ * (authLimiter), deviner un code reste de l'ordre d'une chance sur 40 000
+ * par heure.
  */
-export async function verifyToken(rawToken: string): Promise<{ username: string; deviceToken: string }> {
-    const tokenHash = hashToken(rawToken);
-
-    // Recherche + suppression du token à usage unique, volontairement HORS
-    // de la transaction ci-dessous
-    const verification = await withConnection(async (conn) => {
-        const rows = await conn.query(
-            'SELECT id, username, email, expiresAt FROM email_verifications WHERE tokenHash = ?',
-            [tokenHash]
-        );
-        const row = rows[0];
-        if (row) {
-            await conn.query('DELETE FROM email_verifications WHERE id = ?', [row.id]);
-        }
-        return row;
-    });
-
-    if (!verification || new Date(verification.expiresAt).getTime() < Date.now()) {
-        throw new AppError(400, 'Ce lien de vérification est invalide ou a expiré.');
+export async function verifyCode(requestToken: string | undefined, code: string): Promise<{ username: string; deviceToken: string }> {
+    if (!requestToken) {
+        throw new AppError(400, 'Aucun code en attente sur cet appareil. Demandez un nouveau code.');
     }
 
-    return withTransaction(async (conn) => {
-        const userId = await getOrCreateUser(conn, verification.username);
+    // Le compteur d'essais doit être enregistré même quand le code est faux :
+    // la transaction renvoie donc un résultat au lieu de lever une erreur (ce
+    // qui l'annulerait), et les erreurs sont levées une fois validée.
+    // FOR UPDATE : deux essais simultanés ne peuvent pas lire le même
+    // compteur et dépasser la limite.
+    const check = await withTransaction(async (conn): Promise<CodeCheck> => {
+        const rows = await conn.query(
+            'SELECT id, username, email, codeHash, attempts, expiresAt FROM email_verifications WHERE requestHash = ? FOR UPDATE',
+            [hashToken(requestToken)]
+        );
+        const pending = rows[0];
+        if (!pending) return { status: 'missing' };
+
+        if (new Date(pending.expiresAt).getTime() < Date.now()) {
+            await conn.query('DELETE FROM email_verifications WHERE id = ?', [pending.id]);
+            return { status: 'expired' };
+        }
+
+        if (hashCode(requestToken, code) !== pending.codeHash) {
+            const attempts = Number(pending.attempts) + 1;
+            if (attempts >= MAX_CODE_ATTEMPTS) {
+                await conn.query('DELETE FROM email_verifications WHERE id = ?', [pending.id]);
+            } else {
+                await conn.query('UPDATE email_verifications SET attempts = ? WHERE id = ?', [attempts, pending.id]);
+            }
+            return { status: 'wrong', remainingAttempts: MAX_CODE_ATTEMPTS - attempts };
+        }
+
+        await conn.query('DELETE FROM email_verifications WHERE id = ?', [pending.id]);
+
+        const userId = await getOrCreateUser(conn, pending.username);
         if (userId === null) {
             throw new AppError(400, 'Pseudo invalide.');
         }
 
-        // Revendique le pseudo uniquement s'il ne l'est pas déjà (ne écrase
-        // jamais un email existant — requestVerification a déjà vérifié la
-        // cohérence, mais on ne fait confiance qu'à la base ici).
-        await conn.query('UPDATE users SET email = ? WHERE id = ? AND email IS NULL', [verification.email, userId]);
+        // Revendique le pseudo s'il ne l'est pas encore. S'il l'a été entre
+        // la demande et la saisie par une autre adresse, on refuse : le code
+        // prouve la possession de cette boîte-ci, pas de celle qui protège
+        // désormais le pseudo.
+        await conn.query('UPDATE users SET email = ? WHERE id = ? AND email IS NULL', [pending.email, userId]);
+        const [owner] = await conn.query('SELECT email FROM users WHERE id = ?', [userId]);
+        if (owner.email !== pending.email) {
+            throw new AppError(409, `Le pseudo "${pending.username}" est déjà protégé par une autre adresse email.`);
+        }
 
-        const deviceTokenRaw = crypto.randomBytes(32).toString('hex');
+        const deviceToken = crypto.randomBytes(32).toString('hex');
         await conn.query(
             'INSERT INTO device_tokens (user_id, tokenHash) VALUES (?, ?)',
-            [userId, hashToken(deviceTokenRaw)]
+            [userId, hashToken(deviceToken)]
         );
 
-        return { username: verification.username, deviceToken: deviceTokenRaw };
+        return { status: 'verified', username: pending.username, deviceToken };
     });
+
+    switch (check.status) {
+        case 'missing':
+            throw new AppError(400, 'Aucun code en attente sur cet appareil. Demandez un nouveau code.');
+        case 'expired':
+            throw new AppError(400, 'Ce code a expiré. Demandez-en un nouveau.');
+        case 'wrong':
+            throw new AppError(400, check.remainingAttempts > 0
+                ? `Code incorrect. Il vous reste ${check.remainingAttempts} essai${check.remainingAttempts > 1 ? 's' : ''}.`
+                : 'Code incorrect. Trop d\'essais : demandez un nouveau code.');
+        case 'verified':
+            logAction(`[AUTH] Pseudo "${check.username}" vérifié sur un nouvel appareil`);
+            return { username: check.username, deviceToken: check.deviceToken };
+    }
+}
+
+/**
+ * Demande de code en cours dans ce navigateur, s'il y en a une. Permet au
+ * front de rouvrir l'écran de saisie après un rechargement : sur mobile,
+ * passer dans l'appli Mail suffit parfois à recharger l'onglet.
+ *
+ * L'expiration est comparée en JS, comme dans verifyCode : `expiresAt` est
+ * écrit depuis Node, dont le fuseau peut différer de celui de NOW() côté
+ * base.
+ */
+export async function getPendingVerification(requestToken: string | undefined): Promise<{ username: string; email: string } | null> {
+    if (!requestToken) return null;
+
+    const rows = await withConnection((conn) => conn.query(
+        'SELECT username, email, expiresAt FROM email_verifications WHERE requestHash = ?',
+        [hashToken(requestToken)]
+    ));
+    const pending = rows[0];
+    if (!pending || new Date(pending.expiresAt).getTime() < Date.now()) return null;
+
+    return { username: pending.username, email: pending.email };
 }
 
 /**
@@ -253,4 +339,13 @@ export const deviceTokenCookieOptions = {
     secure: COOKIE_SECURE,
     maxAge: DEVICE_TOKEN_MAX_AGE_MS,
     path: '/',
+};
+
+// Limité aux routes d'auth : le reste de l'API n'a pas à le recevoir.
+export const pendingVerificationCookieOptions = {
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    secure: COOKIE_SECURE,
+    maxAge: VERIFICATION_TTL_MS,
+    path: '/api/auth',
 };

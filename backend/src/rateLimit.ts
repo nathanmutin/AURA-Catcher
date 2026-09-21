@@ -18,3 +18,14 @@ export const authLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
 });
+
+// Saisie du code de vérification. Chaque code n'accepte déjà que 5 essais
+// (voir authService) ; cette limite s'ajoute par sécurité, et reste séparée
+// de authLimiter pour qu'une faute de frappe ne consomme pas le quota
+// d'envois d'email.
+export const codeLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+});

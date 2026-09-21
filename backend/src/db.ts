@@ -121,15 +121,22 @@ export const initDb = async () => {
       )
     `);
 
-    // Demandes de vérification d'email en attente (liens à usage unique).
-    // On ne stocke jamais le token en clair, seulement son hash SHA-256 :
-    // même en cas de fuite de la base, les liens ne sont pas réutilisables.
+    // Demandes de vérification en attente : un code à 6 chiffres envoyé par
+    // email, à saisir dans le navigateur qui l'a demandé.
+    //
+    // La demande est retrouvée par le jeton aléatoire posé en cookie dans ce
+    // navigateur (requestHash = son hash SHA-256), jamais par le code. Le
+    // code est haché avec ce jeton : sans lui, que la base ne contient pas en
+    // clair, une fuite ne permet pas de retrouver le code en essayant le
+    // million de combinaisons.
     await conn.query(`
       CREATE TABLE IF NOT EXISTS email_verifications (
         id INT AUTO_INCREMENT PRIMARY KEY,
+        requestHash VARCHAR(64) NOT NULL UNIQUE,
         username VARCHAR(255) NOT NULL,
         email VARCHAR(255) NOT NULL,
-        tokenHash VARCHAR(64) NOT NULL UNIQUE,
+        codeHash VARCHAR(64) NOT NULL,
+        attempts INT NOT NULL DEFAULT 0,
         expiresAt DATETIME NOT NULL,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
       )

@@ -56,15 +56,27 @@ export const uploadPhotoToPanel = async (panneauId: number, formData: FormData):
     return post<{ success: boolean; imageId: number; message: string }>(`/api/panneaux/${panneauId}/photos`, formData);
 };
 
-// Demande la protection d'un pseudo : envoie un email de vérification.
+// Demande la protection d'un pseudo : envoie un code à 6 chiffres par email.
 export const requestPseudoVerification = async (username: string, email: string): Promise<void> => {
     await postJson<{ success: boolean }>('/api/auth/request-verification', { username, email });
 };
 
-// Indique si cet appareil est vérifié, pour quel pseudo (null sinon), et si
-// ce compte est administrateur.
-export const fetchVerifiedIdentity = async (): Promise<{ username: string | null; isAdmin: boolean }> => {
-    return get<{ username: string | null; isAdmin: boolean }>('/api/auth/me');
+// Saisie du code reçu par email : vérifie cet appareil pour le pseudo demandé.
+export const verifyPseudoCode = async (code: string): Promise<{ username: string }> => {
+    return postJson<{ username: string }>('/api/auth/verify-code', { code });
+};
+
+export interface Identity {
+    username: string | null;
+    isAdmin: boolean;
+    // Code demandé depuis ce navigateur et pas encore saisi.
+    pendingVerification: { username: string; email: string } | null;
+}
+
+// Indique si cet appareil est vérifié, pour quel pseudo (null sinon), si ce
+// compte est administrateur, et si un code attend d'être saisi.
+export const fetchVerifiedIdentity = async (): Promise<Identity> => {
+    return get<Identity>('/api/auth/me');
 };
 
 // Déconnecte l'appareil courant (invalide le token, efface le cookie).

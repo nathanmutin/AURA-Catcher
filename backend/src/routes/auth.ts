@@ -1,16 +1,27 @@
 import { Router } from 'express';
 import { asyncHandler } from '../errors';
-import { authLimiter } from '../rateLimit';
-import { sanitizeAuthor, sanitizeEmail } from '../validation';
-import { requestVerification, verifyToken, getVerifiedUser, logout, renameUser, deviceTokenCookieOptions, DEVICE_TOKEN_COOKIE } from '../services/authService';
-import { escapeHtml } from '../htmlEscape';
+import { authLimiter, codeLimiter } from '../rateLimit';
+import { sanitizeAuthor, sanitizeEmail, parseVerificationCode } from '../validation';
+import {
+    requestVerification,
+    verifyCode,
+    getPendingVerification,
+    getVerifiedUser,
+    logout,
+    renameUser,
+    deviceTokenCookieOptions,
+    pendingVerificationCookieOptions,
+    DEVICE_TOKEN_COOKIE,
+    PENDING_VERIFICATION_COOKIE,
+} from '../services/authService';
 
 const router = Router();
 
 /**
  * POST /api/auth/request-verification
- * Envoie un email de vérification pour protéger un pseudo. Fortement
- * rate-limité : cette route envoie un vrai email à une adresse arbitraire.
+ * Envoie par email un code à 6 chiffres pour protéger un pseudo, et pose le
+ * cookie qui rattache la demande à ce navigateur. Fortement rate-limité :
+ * cette route envoie un vrai email à une adresse arbitraire.
  */
 router.post('/auth/request-verification', authLimiter, asyncHandler(async (req, res) => {
     const username = sanitizeAuthor(req.body.username);
@@ -21,43 +32,28 @@ router.post('/auth/request-verification', authLimiter, asyncHandler(async (req, 
         return;
     }
 
-    await requestVerification(username, email);
+    const requestToken = await requestVerification(username, email, req.cookies?.[PENDING_VERIFICATION_COOKIE]);
+    res.cookie(PENDING_VERIFICATION_COOKIE, requestToken, pendingVerificationCookieOptions);
     res.json({ success: true });
 }));
 
 /**
- * GET /api/auth/verify?token=...
- * Lien cliqué depuis l'email : consomme le token, pose le cookie
- * d'appareil, et affiche une page de confirmation minimaliste (pas besoin
- * de router ça côté frontend pour une page qu'on voit une seule fois).
+ * POST /api/auth/verify-code
+ * Saisie du code reçu par email. Il n'est accepté que dans le navigateur
+ * qui l'a demandé (cookie de demande) : c'est cet appareil qui est vérifié.
  */
-router.get('/auth/verify', asyncHandler(async (req, res) => {
-    const token = typeof req.query.token === 'string' ? req.query.token : '';
-    if (!token) {
-        res.status(400).send('Lien de vérification invalide.');
+router.post('/auth/verify-code', codeLimiter, asyncHandler(async (req, res) => {
+    const code = parseVerificationCode(req.body.code);
+    if (!code) {
+        res.status(400).json({ error: 'Le code de vérification fait 6 chiffres.' });
         return;
     }
 
-    const { username, deviceToken } = await verifyToken(token);
+    const { username, deviceToken } = await verifyCode(req.cookies?.[PENDING_VERIFICATION_COOKIE], code);
 
     res.cookie(DEVICE_TOKEN_COOKIE, deviceToken, deviceTokenCookieOptions);
-
-    const safeUsername = escapeHtml(username);
-    res.send(`
-        <!DOCTYPE html>
-        <html lang="fr">
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>Pseudo confirmé — AURA Catcher</title>
-        </head>
-        <body style="font-family: sans-serif; text-align: center; padding: 60px 20px; color: #1f2937;">
-            <h1>✅ Pseudo confirmé</h1>
-            <p>Le pseudo <strong>${safeUsername}</strong> est maintenant protégé sur cet appareil.</p>
-            <p>Vous pouvez fermer cette page et retourner sur AURA Catcher.</p>
-        </body>
-        </html>
-    `);
+    res.clearCookie(PENDING_VERIFICATION_COOKIE, { path: pendingVerificationCookieOptions.path });
+    res.json({ username });
 }));
 
 /**
@@ -65,10 +61,15 @@ router.get('/auth/verify', asyncHandler(async (req, res) => {
  * Indique si l'appareil courant est vérifié, pour quel pseudo, et si ce
  * compte est administrateur (le front s'en sert pour afficher les actions
  * d'admin — l'autorisation réelle est revérifiée à chaque appel côté serveur).
+ * Signale aussi une demande de code en cours dans ce navigateur, pour que le
+ * front puisse rouvrir l'écran de saisie après un rechargement.
  */
 router.get('/auth/me', asyncHandler(async (req, res) => {
-    const user = await getVerifiedUser(req.cookies?.[DEVICE_TOKEN_COOKIE]);
-    res.json({ username: user?.username ?? null, isAdmin: user?.isAdmin ?? false });
+    const [user, pendingVerification] = await Promise.all([
+        getVerifiedUser(req.cookies?.[DEVICE_TOKEN_COOKIE]),
+        getPendingVerification(req.cookies?.[PENDING_VERIFICATION_COOKIE]),
+    ]);
+    res.json({ username: user?.username ?? null, isAdmin: user?.isAdmin ?? false, pendingVerification });
 }));
 
 /**

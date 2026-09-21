@@ -152,9 +152,43 @@
 }
 
 .account-sent {
-    margin: 0.5rem 0 0;
-    font-size: 0.8rem;
+    margin: 0;
+    font-size: 0.75rem;
     font-weight: 600;
     color: #0369a1;
-    padding-top: 0.5rem;
+}
+
+/* Saisie du code : gros chiffres espacés, lisibles d'un coup d'œil */
+.account-form .account-code-input {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.4em;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.account-code-links {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.account-link-btn {
+    background: none;
+    border: none;
+    padding: 0.25rem 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--aura-blue, #008ecf);
+    cursor: pointer;
+}
+
+.account-link-btn:hover {
+    text-decoration: underline;
+}
+
+.account-link-btn:disabled {
+    color: #94a3b8;
+    cursor: not-allowed;
+    text-decoration: none;
 }

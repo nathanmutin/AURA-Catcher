@@ -44,6 +44,14 @@ export function sanitizeEmail(email: unknown): string | null {
     return trimmed;
 }
 
+// Code de vérification reçu par email : 6 chiffres. Les espaces et tirets
+// d'un copier-coller (« 482 913 ») sont tolérés.
+export function parseVerificationCode(code: unknown): string | null {
+    if (typeof code !== 'string') return null;
+    const digits = code.replace(/[\s-]/g, '');
+    return /^\d{6}$/.test(digits) ? digits : null;
+}
+
 // Identifiant de ressource passé dans l'URL (:id) : entier strictement positif.
 export function parseId(value: unknown): number | null {
     const num = typeof value === 'string' || typeof value === 'number' ? Number(value) : NaN;

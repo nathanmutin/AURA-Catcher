@@ -80,7 +80,10 @@
     padding: 0 2rem;
     align-items: center;
     justify-content: space-between;
-    z-index: 1000;
+    /* Même niveau que l'en-tête mobile : au-dessus de tout ce que la carte
+       superpose (filtre des types et contrôles Leaflet sont à 1000), sinon
+       le menu Compte, qui déborde de la barre, passe derrière eux. */
+    z-index: 2000;
 }
 
 .logo {
