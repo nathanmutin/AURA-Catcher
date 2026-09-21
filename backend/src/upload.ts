@@ -1,7 +1,16 @@
 import multer from 'multer';
-import crypto from 'crypto';
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { TEMP_DIR } from './config';
+import crypto from 'crypto';
+import { logAction } from './logger';
+
+declare global {
+    namespace Express {
+        interface Request {
+            uploadStarted?: boolean;
+        }
+    }
+}
 
 const ALLOWED_MIME_TYPES: Record<string, string> = {
     'image/jpeg': '.jpg',
@@ -46,6 +55,9 @@ function wrapUpload(middleware: RequestHandler): RequestHandler {
     return (req: Request, res: Response, next: NextFunction) => {
         middleware(req, res, (err: unknown) => {
             if (!err) {
+                const file = req.file;
+                req.uploadStarted = true;
+                void logAction(`[UPLOAD START] file=${file?.filename ?? 'missing'}, temp=${file?.path ?? 'missing'}, size=${file?.size ?? 'unknown'}, mime=${file?.mimetype ?? 'unknown'}, contentLength=${req.headers['content-length'] ?? 'unknown'}`);
                 next();
                 return;
             }

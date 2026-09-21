@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import mariadb from 'mariadb';
 import { withConnection, withTransaction, getOrCreateUser } from '../db';
-import { processImage, deleteProcessedImage } from '../imageUtils';
+import { processImage, restoreFailedImage } from '../imageUtils';
 import { logAction } from '../logger';
 import { AppError } from '../errors';
 import { SMALL_DIR, ORIGINAL_DIR } from '../config';
@@ -232,9 +232,7 @@ export async function createPanneau(input: CreatePanneauInput): Promise<Panneau>
             };
         }));
     } catch (err) {
-        // L'image a déjà été écrite sur disque à ce stade : si la transaction
-        // échoue, on la supprime pour ne pas laisser de fichiers orphelins.
-        await deleteProcessedImage(fileNameOriginal, fileNameSmall);
+        await restoreFailedImage(file, fileNameOriginal, fileNameSmall);
         throw err;
     }
 
@@ -290,7 +288,7 @@ export async function addPhotoToPanneau(input: AddPhotoInput): Promise<{ imageId
             return parseInt(imageRes.insertId.toString());
         });
     } catch (err) {
-        await deleteProcessedImage(fileNameOriginal, fileNameSmall);
+        await restoreFailedImage(file, fileNameOriginal, fileNameSmall);
         throw err;
     }
 

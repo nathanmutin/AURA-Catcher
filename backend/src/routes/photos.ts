@@ -5,6 +5,7 @@ import { writeLimiter } from '../rateLimit';
 import { sanitizeAuthor } from '../validation';
 import { addPhotoToPanneau, getImageFilePath } from '../services/panneauxService';
 import { resolveAuthor, DEVICE_TOKEN_COOKIE } from '../services/authService';
+import { logAction } from '../logger';
 
 const router = Router();
 
@@ -44,6 +45,8 @@ router.post('/panneaux/:id/photos', writeLimiter, uploadSingleImage, asyncHandle
         file,
         author,
     });
+
+    await logAction(`[UPLOAD END] success=photo, panelId=${id}, imageId=${imageId}, file=${file.filename}`);
 
     res.status(201).json({
         success: true,

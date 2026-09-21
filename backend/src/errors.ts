@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
+import { errorDetails, logAction } from './logger';
 
 // Erreur "métier" volontaire (ex: ressource introuvable) : porte son propre
 // code HTTP, contrairement à une erreur inattendue qui devient un 500 générique.
@@ -26,6 +27,9 @@ export function asyncHandler(handler: AsyncRouteHandler): RequestHandler {
 // doit rester présent même s'il n'est pas utilisé ici).
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Express exige 4 paramètres pour reconnaître un error handler
 export function errorHandler(err: unknown, req: Request, res: Response, next: NextFunction): void {
+    if (req.uploadStarted) {
+        void logAction(`[UPLOAD END] failure=${errorDetails(err)}, file=${req.file?.filename ?? 'missing'}`);
+    }
     if (err instanceof AppError) {
         res.status(err.status).json({ error: err.message });
         return;
