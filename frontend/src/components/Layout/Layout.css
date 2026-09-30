@@ -23,9 +23,7 @@
 
 @media (min-width: 768px) {
     .layout-main {
-        padding-top: 64px;
-        scroll-padding-top: 80px;
-        /* Offset for desktop nav + breathing room */
-        /* Desktop Nav Height */
+        /* Largeur du rail : le contenu commence à sa droite */
+        padding-left: 200px;
     }
 }

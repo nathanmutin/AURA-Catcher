@@ -10,31 +10,6 @@
     }
 }
 
-.fab-add {
-    position: fixed;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: var(--aura-blue);
-    color: white;
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    border: none;
-    box-shadow: 0 4px 12px rgba(0, 142, 207, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 999;
-    transition: transform 0.2s, background-color 0.2s;
-}
-
-.fab-add:hover {
-    transform: translateX(-50%) scale(1.1);
-    background-color: var(--aura-blue-dark);
-}
-
 .picking-instruction {
     position: absolute;
     top: 80px;
@@ -58,19 +33,6 @@
     border-radius: 12px;
     cursor: pointer;
     font-weight: bold;
-}
-
-@media (min-width: 768px) {
-    .fab-add {
-        bottom: 2rem;
-        right: 2rem;
-        left: auto;
-        transform: none;
-    }
-
-    .fab-add:hover {
-        transform: scale(1.1);
-    }
 }
 
 .picked-location-marker-icon {

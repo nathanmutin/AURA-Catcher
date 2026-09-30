@@ -1,60 +1,5 @@
-.account-menu {
-    position: relative;
-}
-
-.account-toggle-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: #f1f5f9;
-    border: none;
-    border-radius: 10px;
-    padding: 0.45rem 0.75rem;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #334155;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    max-width: 160px;
-}
-
-.account-toggle-btn span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.account-toggle-btn:hover {
-    background: #e2e8f0;
-}
-
-.account-dropdown {
-    position: absolute;
-    top: calc(100% + 0.5rem);
-    right: 0;
-    background: white;
-    border-radius: 14px;
-    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.15);
-    padding: 0.85rem;
-    min-width: 240px;
-    z-index: 3000;
-}
-
-.account-close-btn {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    background: #f1f5f9;
-    border: none;
-    border-radius: 50%;
-    width: 22px;
-    height: 22px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #64748b;
-}
+/* Styles du panneau Compte (page Compte). Les classes gardent leur nom
+   d'origine : seul l'habillage en menu déroulant a disparu. */
 
 .account-current {
     font-weight: 700;
@@ -191,4 +136,22 @@
     color: #94a3b8;
     cursor: not-allowed;
     text-decoration: none;
+}
+
+.account-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.account-loading {
+    color: var(--text-secondary, #64748b);
+}
+
+.account-panel .account-form {
+    gap: 0.5rem;
+}
+
+.account-panel .account-link-btn {
+    align-self: flex-start;
 }

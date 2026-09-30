@@ -10,7 +10,6 @@ import { fetchPanneaux, fetchTypes } from '../api/client';
 import L from 'leaflet';
 import { LocateControl } from "leaflet.locatecontrol";
 import "leaflet.locatecontrol/dist/L.Control.Locate.min.css";
-import { Plus } from 'lucide-react';
 import AddPanneauModal from '../components/AddPanneau/AddPanneauModal.tsx';
 import PickedLocationMarker from '../components/AddPanneau/PickedLocationMarker.tsx';
 import EditPanneauModal from '../components/PanelForm/EditPanneauModal.tsx';
@@ -71,7 +70,7 @@ const LocationControl = () => {
 const MapPage: React.FC = () => {
     const { data: panneaux = [] } = useQuery({ queryKey: ['panneaux'], queryFn: fetchPanneaux });
     const { data: types = [] } = useQuery({ queryKey: ['types'], queryFn: fetchTypes });
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [pickedLocation, setPickedLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -91,6 +90,16 @@ const MapPage: React.FC = () => {
     const isPickingLocation = pickingFor !== null;
 
     const locationSelectionTimerRef = useRef<number | null>(null);
+
+    // Le bouton + de la navigation amène ici avec « ajouter=1 » : on ouvre le
+    // formulaire, puis on retire le paramètre pour que l'adresse reste propre.
+    useEffect(() => {
+        if (searchParams.get('ajouter') !== '1') return;
+        setIsModalOpen(true);
+        const params = new URLSearchParams(searchParams);
+        params.delete('ajouter');
+        setSearchParams(params, { replace: true });
+    }, [searchParams, setSearchParams]);
 
     useEffect(() => {
         return () => {
@@ -214,13 +223,6 @@ const MapPage: React.FC = () => {
                     onLocationChange={setPickedLocation}
                 />
             </MapContainer>
-
-            {/* FAB */}
-            {!isPickingLocation && (
-                <button className="fab-add" onClick={() => setIsModalOpen(true)} aria-label="Ajouter un panneau" title="Ajouter un panneau">
-                    <Plus size={32} />
-                </button>
-            )}
 
             {/* Picking Instruction */}
             {isPickingLocation && (

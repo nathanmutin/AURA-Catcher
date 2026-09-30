@@ -4,6 +4,15 @@ export interface PanelType {
     points: number;
 }
 
+// Une photo de la galerie (supports mobiles, goodies) : pas de position,
+// pas de types, une légende librement modifiable.
+export interface GaleriePhoto {
+    id: number;
+    caption?: string;
+    author?: string;
+    createdAt: string; // ISO date string
+}
+
 export interface LeaderboardEntry {
     username: string;
     // Rang « sportif » : les ex æquo partagent le même rang et le suivant

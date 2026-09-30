@@ -1,0 +1,136 @@
+/* Styles de la modale d'ajout et de la visionneuse de la galerie. */
+.galerie-modal-intro {
+    margin: 0 0 1rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #64748b);
+}
+
+.galerie-error {
+    margin: 0.5rem 0 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #dc2626;
+}
+
+/* Visionneuse plein écran */
+.galerie-viewer {
+    position: fixed;
+    inset: 0;
+    z-index: 4000;
+    background: rgba(2, 6, 23, 0.92);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.galerie-viewer-figure {
+    margin: 0;
+    max-width: min(900px, 100%);
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.galerie-viewer-figure img {
+    min-height: 0;
+    max-height: 70vh;
+    object-fit: contain;
+    border-radius: 12px;
+    background: #0f172a;
+}
+
+.galerie-viewer-info {
+    color: #e2e8f0;
+}
+
+.galerie-viewer-caption {
+    margin: 0;
+    font-size: 0.95rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.galerie-viewer-nocaption {
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.galerie-viewer-edit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: none;
+    border: none;
+    padding: 0;
+    color: #7dd3fc;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.galerie-viewer-edit {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.galerie-viewer-edit input {
+    flex: 1;
+    min-width: 12rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+    border: none;
+    font: inherit;
+}
+
+.galerie-viewer-edit .btn-primary,
+.galerie-viewer-edit .btn-secondary {
+    width: auto;
+    padding: 0.5rem 1rem;
+}
+
+.galerie-viewer-meta {
+    margin: 0.5rem 0 0;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.galerie-viewer-close,
+.galerie-viewer-nav {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(148, 163, 184, 0.25);
+    color: white;
+    cursor: pointer;
+}
+
+.galerie-viewer-close {
+    top: 1rem;
+    right: 1rem;
+}
+
+.galerie-viewer-nav--prev {
+    left: 0.5rem;
+}
+
+.galerie-viewer-nav--next {
+    right: 0.5rem;
+}
+
+.galerie-viewer-close:hover,
+.galerie-viewer-nav:hover {
+    background: rgba(148, 163, 184, 0.45);
+}

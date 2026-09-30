@@ -63,6 +63,24 @@ export const initDb = async () => {
       )
     `);
 
+    // La galerie : photos d'objets aux couleurs de la Région, sans position
+    // (trains, cars, goodies). Une entrée = une photo ; la légende
+    // est sa seule donnée modifiable, d'où l'absence d'historique.
+    // `hidden` est le seul retrait possible, accordé en SQL :
+    //   UPDATE galerie SET hidden = true WHERE id = ...;
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS galerie (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        fileNameOriginal VARCHAR(255) NOT NULL,
+        fileNameSmall VARCHAR(255) NOT NULL,
+        caption TEXT,
+        author_id INT,
+        hidden BOOLEAN NOT NULL DEFAULT false,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (author_id) REFERENCES users(id)
+      )
+    `);
+
     // Create panel_types table
     await conn.query(`
       CREATE TABLE IF NOT EXISTS panel_types (

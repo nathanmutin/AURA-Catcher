@@ -1,20 +1,17 @@
 import React from 'react';
 import { SiGithub, SiWhatsapp } from '@icons-pack/react-simple-icons';
 import { Mail, Rss } from 'lucide-react';
-import supervilleImage from '../assets/faq/superville.webp';
-import appart1Image from '../assets/faq/radio.webp';
-import appart2Image from '../assets/faq/chiottard.webp';
-import mapImage from '../assets/faq/map.webp';
+import supervilleImage from '../../assets/faq/superville.webp';
+import appart1Image from '../../assets/faq/radio.webp';
+import appart2Image from '../../assets/faq/chiottard.webp';
+import mapImage from '../../assets/faq/map.webp';
 
-import './FaqPage.css';
+import './Demarche.css';
 
-const FaqPage: React.FC = () => {
+const Demarche: React.FC = () => {
     return (
-        <div className="faq-page">
             <div className="faq-container">
                 <div className="faq-content">
-                    <h1>À propos d'AURA Catcher</h1>
-
                     <h2>Nous contacter</h2>
                     <p style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
                         Pour toute question, suggestion ou signalement, n'hésitez pas à nous envoyer un message.
@@ -204,7 +201,7 @@ const FaqPage: React.FC = () => {
                         </ol>
                     </div>
 
-                    <div className="sources">
+                    <div className="sources" id="sources">
                         <h3>Sources</h3>
                         <ol>
                             <li id="source-rpaura">
@@ -241,8 +238,7 @@ const FaqPage: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </div>
     );
 };
 
-export default FaqPage;
+export default Demarche;

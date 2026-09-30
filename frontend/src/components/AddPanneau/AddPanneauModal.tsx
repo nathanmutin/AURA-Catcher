@@ -1,5 +1,4 @@
 import React from 'react';
-import { Camera } from 'lucide-react';
 import type { Panneau } from '@shared/types';
 import { useAddPanneauForm, type ModalMode } from './useAddPanneauForm';
 import NearbyPanelsDialog from './NearbyPanelsDialog';
@@ -7,6 +6,7 @@ import FormModal from '../PanelForm/FormModal';
 import LocationField from '../PanelForm/LocationField';
 import TypePicker from '../PanelForm/TypePicker';
 import AuthorField from '../PanelForm/AuthorField';
+import PhotoField from '../PanelForm/PhotoField';
 import './AddPanneauModal.css';
 
 interface Props {
@@ -75,24 +75,7 @@ const AddPanneauModal: React.FC<Props> = ({
             {flow.mode !== 'nearbySelection' && (
                 <FormModal title={isPhotoMode ? 'Ajouter une photo' : 'Ajouter un panneau'} onClose={handleClose}>
                     <form onSubmit={handleSubmit}>
-                        {/* Image Upload Area */}
-                        <div className="upload-area" onClick={() => fileInputRef.current?.click()}>
-                            {preview ? (
-                                <img src={preview} alt="Preview" className="upload-preview" />
-                            ) : (
-                                <div className="upload-placeholder">
-                                    <Camera size={48} color="var(--aura-blue)" />
-                                    <p>Prendre une photo ou importer</p>
-                                </div>
-                            )}
-                            <input
-                                type="file"
-                                accept="image/*"
-                                ref={fileInputRef}
-                                hidden
-                                onChange={handleFileChange}
-                            />
-                        </div>
+                        <PhotoField preview={preview} onChange={handleFileChange} inputRef={fileInputRef} />
 
                         {/* Location Status - only show in create mode */}
                         {!isPhotoMode && (

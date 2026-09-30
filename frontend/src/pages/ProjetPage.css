@@ -1,0 +1,6 @@
+/* Un lien vers une ancre (/projet#sources, ou une ancienne adresse
+   /faq#source-crc1 redirigée) ne doit pas coller la cible au bord, ni la
+   glisser sous l'en-tête fixe du mobile. */
+.page-container [id] {
+    scroll-margin-top: 4rem;
+}

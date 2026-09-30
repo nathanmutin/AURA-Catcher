@@ -1,4 +1,4 @@
-import type { LeaderboardEntry, Panneau, PanelType, PanneauRevision } from '@shared/types';
+import type { GaleriePhoto, LeaderboardEntry, Panneau, PanelType, PanneauRevision } from '@shared/types';
 import { get, post, postJson, patchJson } from './apiClient.ts';
 
 const BASE_URL = import.meta.env.VITE_API_URL || '';
@@ -46,6 +46,25 @@ export const fetchGlobalStats = async (): Promise<{ totalPanels: number; totalCo
 
 export const fetchLeaderboard = async (): Promise<LeaderboardEntry[]> => {
     return get<LeaderboardEntry[]>('/api/stats/leaderboard');
+};
+
+// La galerie : photos d'objets sans position (trains, cars, goodies).
+export const fetchGaleriePhotos = async (): Promise<GaleriePhoto[]> => {
+    return get<GaleriePhoto[]>('/api/galerie');
+};
+
+export const createGaleriePhoto = async (formData: FormData): Promise<GaleriePhoto> => {
+    return post<GaleriePhoto>('/api/galerie', formData);
+};
+
+export const updateGalerieCaption = async (photoId: number, caption: string, author?: string): Promise<GaleriePhoto> => {
+    return patchJson<GaleriePhoto>(`/api/galerie/${photoId}`, { caption, author });
+};
+
+export const galeriePhotoUrl = (photoId: number, isSmall: boolean = true): string => {
+    const params = new URLSearchParams({ size: isSmall ? 'small' : 'original' });
+
+    return `${BASE_URL}/api/galerie/${photoId}/photo?${params.toString()}`;
 };
 
 export const fetchTypes = async (): Promise<PanelType[]> => {

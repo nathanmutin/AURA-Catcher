@@ -1,0 +1,146 @@
+.galerie-container {
+    padding: 2rem;
+    height: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.galerie-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.galerie-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.galerie-subtitle {
+    margin: 0.25rem 0 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary, #64748b);
+    max-width: 44ch;
+}
+
+.galerie-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    width: auto;
+}
+
+.galerie-empty {
+    color: var(--text-secondary, #64748b);
+}
+
+.galerie-grid {
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+/* Toute la vignette est un bouton : accessible au clavier sans effort */
+.galerie-photo {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    color: var(--text-primary);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.galerie-photo:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.galerie-photo:focus-visible {
+    outline: 3px solid var(--aura-blue);
+    outline-offset: 2px;
+}
+
+.galerie-photo img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+}
+
+.galerie-photo-info {
+    display: block;
+    padding: 0.5rem 0.75rem 0.625rem;
+}
+
+.galerie-photo-caption,
+.galerie-photo-meta {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.galerie-photo-caption {
+    font-size: 0.85rem;
+}
+
+.galerie-photo-meta {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #64748b);
+}
+
+.galerie-more {
+    display: flex;
+    justify-content: center;
+}
+
+.galerie-more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid #e2e8f0;
+    background-color: white;
+    color: var(--text-primary);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.galerie-more-btn:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+@media (max-width: 640px) {
+    .galerie-container {
+        padding: 1rem;
+    }
+
+    .galerie-header {
+        flex-direction: column;
+    }
+
+    .galerie-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+}

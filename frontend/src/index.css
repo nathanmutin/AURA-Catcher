@@ -366,3 +366,19 @@ body {
 .animate-slideUp {
   animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+/* Conteneur des pages qui défilent (Stats, À propos) : la carte et la
+   galerie ont leurs propres contraintes. */
+.page-container {
+  padding: 2rem;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+@media (max-width: 640px) {
+  .page-container {
+    padding: 1rem;
+  }
+}
