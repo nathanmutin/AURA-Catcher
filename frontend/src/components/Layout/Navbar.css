@@ -166,7 +166,6 @@
 
 /* Le bouton d'ajout, au milieu des destinations sur les deux mises en page */
 .nav-add {
-    position: relative;
     display: flex;
     justify-content: center;
     flex: 1;

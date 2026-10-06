@@ -1,0 +1,78 @@
+/* La modale réutilise la coquille des formulaires (voile, carte, titre,
+   bouton de fermeture) : seul le contenu du choix est habillé ici. */
+
+.add-choice-card {
+    max-width: 380px;
+}
+
+/* Les deux cases côte à côte, y compris sur mobile : empilées, elles se
+   liraient comme une liste d'options à parcourir, alors qu'il s'agit d'une
+   alternative à trancher d'un regard. */
+.add-choice-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.add-choice {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 1.25rem 0.5rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    background: white;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+}
+
+.add-choice svg {
+    color: var(--aura-blue);
+}
+
+.add-choice-label {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.add-choice-hint {
+    font-size: 0.78rem;
+    line-height: 1.25;
+    color: #64748b;
+    text-align: center;
+}
+
+.add-choice:hover {
+    border-color: var(--aura-blue);
+    background: #f0f9ff;
+    transform: translateY(-2px);
+}
+
+.add-choice:active {
+    transform: translateY(0);
+}
+
+/* Le générateur : accessible, mais hors du choix — il ne contribue à rien. */
+.add-choice-aside {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    background: none;
+    color: #64748b;
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.add-choice-aside:hover {
+    color: var(--aura-blue);
+}

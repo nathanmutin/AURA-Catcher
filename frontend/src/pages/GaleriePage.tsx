@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { ChevronDown, ImagePlus } from 'lucide-react';
+import { ChevronDown, Plus } from 'lucide-react';
 import type { GaleriePhoto } from '@shared/types';
 import { fetchGaleriePhotos, galeriePhotoUrl } from '../api/client';
 import { formatShortDate, formatFullDate } from '../utils/dates';
+import { useAddChoice } from '../components/Layout/Layout';
 import AddGaleriePhotoModal from '../components/Galerie/AddGaleriePhotoModal';
 import GaleriePhotoViewer from '../components/Galerie/GaleriePhotoViewer';
 import './GaleriePage.css';
@@ -19,6 +20,10 @@ const PAGE_SIZE = 24;
 const GaleriePage: React.FC = () => {
     const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
     const [isAdding, setIsAdding] = useState(false);
+    // Le bouton d'ajout de la page ouvre le même choix que celui de la
+    // navigation : « ajouter » ne doit pas vouloir dire « ajouter ici » selon
+    // l'endroit d'où on clique.
+    const openAdd = useAddChoice();
     // La photo ouverte vit dans l'URL (?photo=142) : elle se partage et le
     // bouton retour referme la visionneuse au lieu de quitter la galerie.
     const [searchParams, setSearchParams] = useSearchParams();
@@ -61,8 +66,8 @@ const GaleriePage: React.FC = () => {
                         Les plus belles photos d'objets aux couleurs de notre Région : trains, cars, minibus, goodies.
                     </p>
                 </div>
-                <button type="button" className="btn-primary galerie-add-btn" onClick={() => setIsAdding(true)}>
-                    <ImagePlus size={18} /> Ajouter une photo
+                <button type="button" className="btn-primary galerie-add-btn" onClick={openAdd}>
+                    <Plus size={18} /> Ajouter
                 </button>
             </div>
 

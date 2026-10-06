@@ -1,10 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { Plus, User, X } from 'lucide-react';
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import { Plus, User } from 'lucide-react';
 import { useIdentity } from '../../hooks/useIdentity';
-import { useIsDesktop } from '../../hooks/useMediaQuery';
 import { NAV_ENTRIES } from './navigation';
-import AddMenu from './AddMenu';
 import './Navbar.css';
 
 import iconSvg from '../../assets/icons/favicon.svg';
@@ -16,17 +14,14 @@ const BAR_ENTRIES = NAV_ENTRIES.filter(entry => !entry.railOnly);
 // pouce ; sur ordinateur, il vient après les destinations.
 const MIDDLE = Math.ceil(BAR_ENTRIES.length / 2);
 
-const Navbar: React.FC = () => {
-    const [isAddOpen, setIsAddOpen] = useState(false);
-    const isDesktop = useIsDesktop();
-    const { username } = useIdentity();
-    const location = useLocation();
+interface Props {
+    // La modale de choix appartient au Layout : la barre ne fait que la
+    // demander, comme n'importe quel autre bouton d'ajout du site.
+    onAddClick: () => void;
+}
 
-    // Le menu d'ajout n'est pas une page : il se referme dès qu'on navigue,
-    // y compris quand on choisit une de ses entrées.
-    useEffect(() => {
-        setIsAddOpen(false);
-    }, [location.pathname, location.search]);
+const Navbar: React.FC<Props> = ({ onAddClick }) => {
+    const { username } = useIdentity();
 
     const before = BAR_ENTRIES.slice(0, MIDDLE);
     const after = BAR_ENTRIES.slice(MIDDLE);
@@ -35,11 +30,11 @@ const Navbar: React.FC = () => {
         <button
             type="button"
             className={`nav-add-btn ${className}`}
-            onClick={() => setIsAddOpen(open => !open)}
-            aria-expanded={isAddOpen}
-            aria-label={isAddOpen ? 'Fermer le menu d\'ajout' : 'Ajouter'}
+            onClick={onAddClick}
+            aria-haspopup="dialog"
+            aria-label="Ajouter"
         >
-            {isAddOpen ? <X size={24} /> : <Plus size={24} />}
+            <Plus size={24} />
         </button>
     );
 
@@ -68,7 +63,6 @@ const Navbar: React.FC = () => {
 
                 <div className="nav-add">
                     {addButton('nav-add-btn--bar')}
-                    {isAddOpen && !isDesktop && <AddMenu variant="sheet" onClose={() => setIsAddOpen(false)} />}
                 </div>
 
                 {after.map(({ to, label, icon: Icon }) => (
@@ -97,13 +91,12 @@ const Navbar: React.FC = () => {
                     <button
                         type="button"
                         className="nav-add-btn nav-add-btn--rail"
-                        onClick={() => setIsAddOpen(open => !open)}
-                        aria-expanded={isAddOpen}
+                        onClick={onAddClick}
+                        aria-haspopup="dialog"
                     >
-                        {isAddOpen ? <X size={20} /> : <Plus size={20} />}
+                        <Plus size={20} />
                         <span>Ajouter</span>
                     </button>
-                    {isAddOpen && isDesktop && <AddMenu variant="popover" onClose={() => setIsAddOpen(false)} />}
                 </div>
             </nav>
         </>

@@ -59,7 +59,7 @@ const AddGaleriePhotoModal: React.FC<Props> = ({ onClose, onSuccess }) => {
     };
 
     return (
-        <FormModal title="Ajouter une photo à la galerie" onClose={onClose}>
+        <FormModal title="Ajouter un objet" onClose={onClose}>
             <p className="galerie-modal-intro">
                 Un objet aux couleurs de la Région : un train, un car, un gobelet… Tout ce qui n'a pas de place fixe.
             </p>
