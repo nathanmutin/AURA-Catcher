@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
 import './index.css';
 
@@ -16,6 +16,20 @@ const RedirectToProjet: React.FC = () => {
   return <Navigate to={{ pathname: '/projet', search, hash }} replace />;
 };
 
+// /panneau/:id et /objet/:id sont servis par le backend (les pages de
+// partage) et n'arrivent normalement jamais jusqu'ici. Ces deux routes sont
+// le filet du jour où un proxy mal configuré laisserait passer l'adresse :
+// atterrir au bon endroit plutôt que sur une page blanche.
+const RedirectToPanneau: React.FC = () => {
+  const { id } = useParams();
+  return <Navigate to={`/?panneauId=${id}`} replace />;
+};
+
+const RedirectToObjet: React.FC = () => {
+  const { id } = useParams();
+  return <Navigate to={`/galerie?photo=${id}`} replace />;
+};
+
 function App() {
   return (
     <Router>
@@ -28,6 +42,8 @@ function App() {
             <Route path="/stats" element={<StatsPage />} />
             <Route path="/projet" element={<ProjetPage />} />
             <Route path="/compte" element={<AccountPage />} />
+            <Route path="/panneau/:id" element={<RedirectToPanneau />} />
+            <Route path="/objet/:id" element={<RedirectToObjet />} />
             {/* Ancienne adresse de la page d'information. */}
             <Route path="/faq" element={<RedirectToProjet />} />
           </Route>

@@ -60,3 +60,31 @@ export async function restoreFailedImage(
     await fs.remove(smallPath);
 }
 
+// Dimensions de l'aperçu de partage : le format 1,91:1 attendu par Open
+// Graph, et assez grand pour que les messageries affichent la grande
+// vignette plutôt qu'une pastille.
+export const SHARE_IMAGE_WIDTH = 1200;
+export const SHARE_IMAGE_HEIGHT = 630;
+
+/**
+ * L'aperçu de partage d'une photo : un JPEG recadré au format ci-dessus.
+ *
+ * Produit à la volée plutôt que stocké : un lecteur de lien ne le demande
+ * qu'une fois et le garde ensuite en cache. La vignette du site ne pouvait
+ * pas servir — elle est en WebP, que plusieurs clients (dont WhatsApp)
+ * n'affichent pas dans un aperçu, et trop petite pour la grande vignette.
+ */
+export async function renderShareImage(sourcePath: string): Promise<Buffer> {
+    return sharp(sourcePath)
+        .rotate()
+        .resize(SHARE_IMAGE_WIDTH, SHARE_IMAGE_HEIGHT, {
+            fit: 'cover',
+            // Une photo sur deux est prise en portrait : le cadrage en perd
+            // alors les deux tiers en hauteur. `attention` laisse sharp
+            // choisir la bande à garder d'après les contrastes et les
+            // couleurs vives, ce qui retient le panneau plutôt que le ciel.
+            position: sharp.strategy.attention,
+        })
+        .jpeg({ quality: 80 })
+        .toBuffer();
+}

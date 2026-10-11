@@ -20,6 +20,17 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
+      },
+      // Les pages de partage sont rendues par le serveur : elles ne doivent
+      // pas être avalées par le repli vers l'application. La barre finale
+      // est volontaire, pour ne pas attraper /panneaux.
+      '/panneau/': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/objet/': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
       }
     }
   },

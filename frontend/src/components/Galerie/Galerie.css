@@ -59,7 +59,8 @@
     font-style: italic;
 }
 
-.galerie-viewer-edit-btn {
+.galerie-viewer-edit-btn,
+.galerie-viewer-share-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;

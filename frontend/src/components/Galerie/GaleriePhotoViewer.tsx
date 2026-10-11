@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Pencil, User, X } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Pencil, Share2, User, X } from 'lucide-react';
 import type { GaleriePhoto } from '@shared/types';
 import { galeriePhotoUrl, updateGalerieCaption } from '../../api/client';
 import { ApiError } from '../../api/apiClient';
@@ -28,6 +28,7 @@ const GaleriePhotoViewer: React.FC<Props> = ({ photo, hasPrevious, hasNext, onPr
     const [isEditing, setIsEditing] = useState(false);
     const [draft, setDraft] = useState('');
     const [errorMsg, setErrorMsg] = useState('');
+    const [copied, setCopied] = useState(false);
 
     const queryClient = useQueryClient();
     const author = useDefaultAuthor();
@@ -37,7 +38,30 @@ const GaleriePhotoViewer: React.FC<Props> = ({ photo, hasPrevious, hasNext, onPr
     useEffect(() => {
         setIsEditing(false);
         setErrorMsg('');
+        setCopied(false);
     }, [photo.id]);
+
+    const handleShare = () => {
+        // /objet/:id plutôt que l'adresse de la galerie : c'est elle qui
+        // porte les balises donnant la photo en aperçu dans une messagerie,
+        // avant de renvoyer le visiteur sur la galerie.
+        const url = `${window.location.origin}/objet/${photo.id}`;
+
+        if (navigator.share) {
+            navigator.share({
+                title: 'AURA Catcher',
+                text: photo.caption
+                    ? `Regarde cet objet aux couleurs de la Région : ${photo.caption}`
+                    : 'Regarde cet objet aux couleurs de la Région',
+                url,
+            }).catch(console.error);
+        } else {
+            navigator.clipboard.writeText(url).then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            });
+        }
+    };
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
@@ -119,6 +143,15 @@ const GaleriePhotoViewer: React.FC<Props> = ({ photo, hasPrevious, hasNext, onPr
                                 onClick={() => { setDraft(photo.caption ?? ''); setIsEditing(true); }}
                             >
                                 <Pencil size={14} /> Modifier la légende
+                            </button>
+                            <button
+                                type="button"
+                                className="galerie-viewer-share-btn"
+                                onClick={handleShare}
+                            >
+                                {copied
+                                    ? <><Check size={14} /> Lien copié</>
+                                    : <><Share2 size={14} /> Partager</>}
                             </button>
                         </p>
                     )}

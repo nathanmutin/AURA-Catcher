@@ -35,7 +35,7 @@ function renderChanges(changes: NonNullable<FeedItem['changes']>): string {
 // une phrase qui ne dit rien (la photo, elle, reste affichée).
 function renderDescription(item: FeedItem): string {
     const parts: string[] = [];
-    if (item.image) parts.push(`<img src="${item.image.url}" alt="Photo du panneau" />`);
+    if (item.image) parts.push(`<img src="${item.image.url}" alt="${escapeHtml(item.image.alt)}" />`);
     if (item.description) parts.push(`<p>${escapeHtml(item.description)}</p>`);
     if (item.changes?.length) parts.push(renderChanges(item.changes));
 

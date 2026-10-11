@@ -4,6 +4,7 @@ import { uploadSingleImage } from '../upload';
 import { writeLimiter } from '../rateLimit';
 import { sanitizeAuthor } from '../validation';
 import { addPhotoToPanneau, getImageFilePath } from '../services/panneauxService';
+import { renderShareImage } from '../imageUtils';
 import { resolveAuthor, DEVICE_TOKEN_COOKIE } from '../services/authService';
 import { logAction } from '../logger';
 
@@ -18,6 +19,22 @@ router.get('/photo/:id', asyncHandler(async (req, res) => {
     const size = req.query.size === 'original' ? 'original' : 'small';
     const filePath = await getImageFilePath(id, size);
     res.sendFile(filePath);
+}));
+
+/**
+ * GET /api/photo/:id/apercu.jpg
+ * L'aperçu de partage : la photo recadrée en JPEG, pour les balises Open
+ * Graph de /panneau/:id. Une adresse à part plutôt qu'un paramètre de
+ * taille, pour qu'un lecteur de lien garde le bon fichier en cache.
+ */
+router.get('/photo/:id/apercu.jpg', asyncHandler(async (req, res) => {
+    const filePath = await getImageFilePath(String(req.params.id), 'original');
+
+    res.type('jpeg')
+        // Une photo ne change jamais : seul un nouvel identifiant produit
+        // une nouvelle image.
+        .set('Cache-Control', 'public, max-age=31536000, immutable')
+        .send(await renderShareImage(filePath));
 }));
 
 /**

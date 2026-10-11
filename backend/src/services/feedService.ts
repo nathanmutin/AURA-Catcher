@@ -25,6 +25,7 @@ export interface FeedItem {
         url: string;
         type: string;
         length: number;
+        alt: string;
     };
 }
 
@@ -47,6 +48,14 @@ interface PhotoRow {
     username: string | null;
     fileNameSmall: string;
     comment: string | null;
+}
+
+interface GalerieRow {
+    id: number;
+    caption: string | null;
+    createdAt: Date;
+    username: string | null;
+    fileNameSmall: string;
 }
 
 interface UserRow {
@@ -174,24 +183,39 @@ function mimeTypeForFile(fileName: string): string {
 // La taille exacte du fichier est nécessaire pour l'attribut "length" d'une
 // <enclosure> RSS. Si le fichier a disparu du disque, on omet simplement
 // l'image plutôt que de faire échouer tout le flux pour un seul événement.
-async function resolveImageEnclosure(imageId: number | null, fileNameSmall: string | null): Promise<FeedItem['image']> {
-    if (!imageId || !fileNameSmall) return undefined;
+async function resolveImageEnclosure(url: string | null, fileNameSmall: string | null, alt: string): Promise<FeedItem['image']> {
+    if (!url || !fileNameSmall) return undefined;
     try {
         const stats = await fs.stat(path.join(SMALL_DIR, fileNameSmall));
         return {
-            url: `${PUBLIC_URL}/api/photo/${imageId}?size=small`,
+            url,
             type: mimeTypeForFile(fileNameSmall),
             length: stats.size,
+            alt,
         };
     } catch {
         return undefined;
     }
 }
 
+// Les vignettes des deux collections ne vivent pas à la même adresse.
+const panneauPhotoUrl = (imageId: number | null) => (imageId ? `${PUBLIC_URL}/api/photo/${imageId}?size=small` : null);
+const galeriePhotoUrl = (photoId: number) => `${PUBLIC_URL}/api/galerie/${photoId}/photo?size=small`;
+
+// Les adresses de partage : elles portent les balises Open Graph de
+// l'élément, donc un lien repris du flux vers un réseau social y montre la
+// bonne photo au lieu de la capture d'écran du site.
+const panneauLink = (panneauId: number) => `${PUBLIC_URL}/panneau/${panneauId}`;
+const objetLink = (photoId: number) => `${PUBLIC_URL}/objet/${photoId}`;
+
 /**
- * Rassemble les 4 types d'événements récents (nouveau panneau, nouvelle
- * photo ajoutée à un panneau existant, modification d'un panneau, nouveau
- * contributeur) en une seule liste chronologique, pour le flux RSS.
+ * Rassemble les 5 types d'événements récents (nouveau panneau, nouvelle
+ * photo ajoutée à un panneau existant, modification d'un panneau, nouvel
+ * objet dans la galerie, nouveau contributeur) en une seule liste
+ * chronologique, pour le flux RSS.
+ *
+ * La galerie n'a pas d'équivalent de « panneau modifié » : une légende s'y
+ * corrige sans révision, il n'y a donc pas d'avant/après à raconter.
  */
 export async function getRecentActivity(): Promise<FeedItem[]> {
     return withConnection(async (conn) => {
@@ -225,6 +249,15 @@ export async function getRecentActivity(): Promise<FeedItem[]> {
             LIMIT ?
         `, [FEED_ITEM_LIMIT]);
 
+        const galerieRows: GalerieRow[] = await conn.query(`
+            SELECT g.id, g.caption, g.createdAt, g.fileNameSmall, u.username
+            FROM galerie g
+            LEFT JOIN users u ON u.id = g.author_id
+            WHERE g.hidden = false
+            ORDER BY g.createdAt DESC
+            LIMIT ?
+        `, [FEED_ITEM_LIMIT]);
+
         const userRows: UserRow[] = await conn.query(`
             SELECT id, username, createdAt
             FROM users
@@ -253,10 +286,10 @@ export async function getRecentActivity(): Promise<FeedItem[]> {
                 title: typeNames.length > 0
                     ? `Nouveau panneau (${typeNames.join(', ')}) ajouté par ${author}`
                     : `Nouveau panneau ajouté par ${author}`,
-                link: `${PUBLIC_URL}/?panneauId=${row.id}`,
+                link: panneauLink(Number(row.id)),
                 description: row.comment || undefined,
                 pubDate: row.createdAt,
-                image: await resolveImageEnclosure(row.imageId, row.fileNameSmall),
+                image: await resolveImageEnclosure(panneauPhotoUrl(row.imageId), row.fileNameSmall, 'Photo du panneau'),
             };
         }));
 
@@ -265,12 +298,24 @@ export async function getRecentActivity(): Promise<FeedItem[]> {
             return {
                 guid: `photo-${row.id}`,
                 title: `Nouvelle photo ajoutée par ${author}`,
-                link: `${PUBLIC_URL}/?panneauId=${row.panneau_id}`,
+                link: panneauLink(Number(row.panneau_id)),
                 // Les photos n'ont pas de description propre : celle du
                 // panneau auquel elles appartiennent sert de contexte.
                 description: row.comment || undefined,
                 pubDate: row.createdAt,
-                image: await resolveImageEnclosure(row.id, row.fileNameSmall),
+                image: await resolveImageEnclosure(panneauPhotoUrl(Number(row.id)), row.fileNameSmall, 'Photo du panneau'),
+            };
+        }));
+
+        const galerieItems = await Promise.all(galerieRows.map(async (row): Promise<FeedItem> => {
+            const author = row.username || 'Anonyme';
+            return {
+                guid: `galerie-${row.id}`,
+                title: `Nouvel objet ajouté par ${author}`,
+                link: objetLink(Number(row.id)),
+                description: row.caption || undefined,
+                pubDate: row.createdAt,
+                image: await resolveImageEnclosure(galeriePhotoUrl(Number(row.id)), row.fileNameSmall, "Photo de l'objet"),
             };
         }));
 
@@ -347,16 +392,16 @@ export async function getRecentActivity(): Promise<FeedItem[]> {
                 title: row.restoredFrom
                     ? `Version restaurée par ${author} (${fields})`
                     : `Panneau modifié par ${author} (${fields})`,
-                link: `${PUBLIC_URL}/?panneauId=${row.panneau_id}`,
+                link: panneauLink(Number(row.panneau_id)),
                 // Le détail avant/après remplace le commentaire brut : c'est
                 // ce qui rend la modification lisible dans un lecteur de flux.
                 changes: changes.length > 0 ? changes : undefined,
                 pubDate: row.createdAt,
-                image: await resolveImageEnclosure(row.imageId, row.fileNameSmall),
+                image: await resolveImageEnclosure(panneauPhotoUrl(row.imageId), row.fileNameSmall, 'Photo du panneau'),
             };
         }));
 
-        const items = [...panneauItems, ...photoItems, ...revisionItems, ...userItems];
+        const items = [...panneauItems, ...photoItems, ...revisionItems, ...galerieItems, ...userItems];
         items.sort((a, b) => b.pubDate.getTime() - a.pubDate.getTime());
         return items.slice(0, FEED_ITEM_LIMIT);
     });

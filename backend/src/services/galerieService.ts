@@ -47,7 +47,12 @@ export async function listGaleriePhotos(): Promise<GaleriePhoto[]> {
     return rows.map(toPhoto);
 }
 
-async function loadPhoto(id: number): Promise<GaleriePhoto> {
+/**
+ * Une photo seule, ou null si elle n'existe pas (ou plus : une photo
+ * masquée est invisible partout). Sert à la page de partage, qui préfère
+ * rendre une page « introuvable » plutôt que remonter une erreur.
+ */
+export async function getGaleriePhoto(id: number): Promise<GaleriePhoto | null> {
     const rows: GalerieRow[] = await withConnection((conn) => conn.query(`
         SELECT g.id, g.caption, g.createdAt, u.username
         FROM galerie g
@@ -55,10 +60,15 @@ async function loadPhoto(id: number): Promise<GaleriePhoto> {
         WHERE g.id = ? AND ${VISIBLE}
     `, [id]));
 
-    if (rows.length === 0) {
+    return rows.length > 0 ? toPhoto(rows[0]) : null;
+}
+
+async function loadPhoto(id: number): Promise<GaleriePhoto> {
+    const photo = await getGaleriePhoto(id);
+    if (!photo) {
         throw new AppError(404, 'Photo introuvable');
     }
-    return toPhoto(rows[0]);
+    return photo;
 }
 
 interface AddGaleriePhotoInput {

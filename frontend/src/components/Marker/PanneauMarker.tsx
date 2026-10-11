@@ -23,12 +23,17 @@ export const PanneauMarker: React.FC<PanneauMarkerProps> = ({ panneau, types, is
 
     const handleShare = (e: React.MouseEvent) => {
         e.stopPropagation();
-        const url = `${window.location.origin}/?panneauId=${panneau.id}`;
+        // /panneau/:id plutôt que la carte directement : cette adresse-là
+        // porte les balises qui donnent sa photo en aperçu dans WhatsApp ou
+        // Signal, et renvoie ensuite le visiteur sur la carte.
+        const url = `${window.location.origin}/panneau/${panneau.id}`;
 
         if (navigator.share) {
             navigator.share({
                 title: 'AURA Catcher',
-                text: `Regarde ce magnifique panneau de la Région : ${panneau.comment || ''}`,
+                text: panneau.comment
+                    ? `Regarde ce magnifique panneau de la Région : ${panneau.comment}`
+                    : 'Regarde ce magnifique panneau de la Région',
                 url: url
             }).catch(console.error);
         } else {

@@ -180,6 +180,14 @@ async function loadPanneau(conn: mariadb.Connection, panneauId: number): Promise
     };
 }
 
+/**
+ * Un panneau seul, dans la même forme que la liste. Sert à la page de
+ * partage, qui n'a pas de raison de charger les quarante autres.
+ */
+export async function getPanneau(panneauId: number): Promise<Panneau | null> {
+    return withConnection((conn) => loadPanneau(conn, panneauId));
+}
+
 interface CreatePanneauInput {
     file: Express.Multer.File;
     lat: number;

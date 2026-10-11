@@ -4,6 +4,7 @@ import { uploadSingleImage } from '../upload';
 import { writeLimiter } from '../rateLimit';
 import { sanitizeAuthor, sanitizeComment, parseId } from '../validation';
 import { listGaleriePhotos, addGaleriePhoto, updateGalerieCaption, getGalerieFilePath } from '../services/galerieService';
+import { renderShareImage } from '../imageUtils';
 import { resolveAuthor, DEVICE_TOKEN_COOKIE } from '../services/authService';
 
 const router = Router();
@@ -72,6 +73,27 @@ router.get('/galerie/:id/photo', asyncHandler(async (req, res) => {
 
     const size = req.query.size === 'original' ? 'original' : 'small';
     res.sendFile(await getGalerieFilePath(id, size));
+}));
+
+/**
+ * GET /api/galerie/:id/apercu.jpg
+ * L'aperçu de partage, pour les balises Open Graph de /objet/:id. Même
+ * format que celui des panneaux.
+ */
+router.get('/galerie/:id/apercu.jpg', asyncHandler(async (req, res) => {
+    const id = parseId(req.params.id);
+    if (id === null) {
+        res.status(400).json({ error: 'Identifiant invalide' });
+        return;
+    }
+
+    const filePath = await getGalerieFilePath(id, 'original');
+
+    res.type('jpeg')
+        // Une photo ne change jamais : seul un nouvel identifiant produit
+        // une nouvelle image.
+        .set('Cache-Control', 'public, max-age=31536000, immutable')
+        .send(await renderShareImage(filePath));
 }));
 
 export default router;

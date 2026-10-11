@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import fs from 'fs';
 import routes from './routes';
+import shareRoutes from './routes/share';
 import { initDb } from './db';
 import { errorHandler } from './errors';
 import { LOGS_DIR, PHOTOS_DIR, TEMP_DIR, ORIGINAL_DIR, SMALL_DIR, TRUST_PROXY_HOPS } from './config';
@@ -44,6 +45,8 @@ app.use(express.json());
 // pas l'en-tête Cookie par défaut.
 app.use(cookieParser());
 app.use('/api', routes);
+// Hors de /api : une adresse faite pour être collée dans une conversation.
+app.use(shareRoutes);
 
 // Doit rester après le montage des routes : Express reconnaît un middleware
 // à 4 paramètres comme gestionnaire d'erreurs et l'appelle via next(err).
